@@ -48,6 +48,7 @@ extern unsigned base_len ;  //  length of base_path
 //  debug functions
 int hex_dump(u8 *bfr, int bytes, unsigned addr);
 int hex_dump(u8 *bfr, int bytes);
+int syslog(const char *fmt, ...);
 
 // ULLONG_MAX = 18,446,744,073,709,551,615
 #define  MAX_ULL_COMMA_LEN  26

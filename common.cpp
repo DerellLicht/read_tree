@@ -96,6 +96,32 @@ int hex_dump(u8 *bfr, int bytes)
    return hex_dump(bfr, bytes, 0) ;
 }
 
+//********************************************************************
+//  On Windows platform, try to redefine printf/fprintf
+//  so we can output code to a debug window.
+//  Also, shadow syslog() within OutputDebugStringA()
+//  Note: printf() remapping was unreliable,
+//  but syslog worked great.
+//********************************************************************
+//lint -esym(714, syslog)
+//lint -esym(759, syslog)
+//lint -esym(765, syslog)
+int syslog(const char *fmt, ...)
+{
+   char consoleBuffer[3000] ;
+   va_list al; //lint !e522
+
+//lint -esym(526, __builtin_va_start)
+//lint -esym(628, __builtin_va_start)
+   va_start(al, fmt);   //lint !e1055 !e530
+   vsprintf(consoleBuffer, fmt, al);   //lint !e64
+   // if (common_logging_enabled)
+   //    fprintf(cmlogfd, "%s", consoleBuffer) ;
+   OutputDebugStringA(consoleBuffer) ;
+   va_end(al);
+   return 1;
+}
+
 //*****************************************************************************
 // ULLONG_MAX = 18,446,744,073,709,551,615
 //*****************************************************************************

@@ -39,9 +39,9 @@ OBJS = $(CSRC:.c=.o) $(CPPSRC:.cpp=.o)
 	$(TOOLS)\g++ $(CxxFLAGS) $<
 
 ifeq ($(USE_64BIT),NO)
-BIN = read_files.exe
+BIN = read_tree.exe
 else
-BIN = read_files64.exe
+BIN = read_tree64.exe
 endif
 
 all: $(BIN)
@@ -51,7 +51,7 @@ clean:
 
 dist:
 	rm -f read_files.zip
-	zip read_files.zip $(BIN) Readme.md
+	zip read_tree.zip $(BIN) Readme.md
 
 wc:
 	wc -l *.cpp
@@ -67,6 +67,6 @@ $(BIN): $(OBJS)
 
 # DO NOT DELETE
 
-read_files.o: common.h read_files.h qualify.h
+read_tree.o: common.h read_tree.h qualify.h
 common.o: common.h
 qualify.o: qualify.h
