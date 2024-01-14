@@ -6,7 +6,7 @@
 //  
 //**********************************************************************************
 
-//lint -esym(756, u64)  global typedef not referenced
+//lint -esym(756, u64, uchar)  global typedef not referenced
 
 typedef  unsigned long long   u64 ;
 typedef  unsigned char        uchar ;

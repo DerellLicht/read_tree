@@ -43,12 +43,10 @@ static char formstr[50];
 #define  MAX_EXT_LEN    6
 //lint -esym(751, ffdata_t)  // local typedef not referenced
 typedef struct ffdata {
-   uchar          attrib ;
    FILETIME       ft ;
    ULONGLONG      fsize ;
    char           *filename ;
    char           ext[MAX_EXT_LEN+1];
-   uchar          dirflag ;
    struct ffdata  *next ;
 } ffdata_t, *ffdata_p;
 
@@ -64,23 +62,10 @@ struct dirs
    dirs *brothers;
    dirs *sons;
    char *name;
-   uchar attrib;
-   // ULONGLONG dirsize;
-   // ULONGLONG dirsecsize;
-   // ULONGLONG subdirsize;
-   // ULONGLONG subdirsecsize;
-   // unsigned files;
-   // unsigned directs;
-   // unsigned subfiles;
-   // unsigned subdirects;
-   // bool     is_multi_byte ;
-   // uint     mb_len ;
    ffdata_p ftop ;
 };
 
 dirs *top = NULL;
-
-
 
 //*****************************************************************
 //  this was used for debugging directory-tree read and build
@@ -192,19 +177,23 @@ debug_dump(dirpath, tempstr) ;
 
             // printf("DIRECTORY %04X %s\n", fdata.attrib, fdata.fname) ;
             //  skip '.' and '..', but NOT .ncftp (for example)
-            if (fdata.cFileName[0] != '.')
-               cut_dot_dirs = false;
-            else if (fdata.cFileName[1] == 0)
+            if (strcmp(fdata.cFileName, ".") == 0  ||
+                strcmp(fdata.cFileName, "..") == 0) {
                cut_dot_dirs = true;
-            else if (fdata.cFileName[1] == '.' && fdata.cFileName[2] == 0)
-               cut_dot_dirs = true;
-            else
+            }
+            else {
                cut_dot_dirs = false;
+            }
+            // if (fdata.cFileName[0] != '.')
+            //    cut_dot_dirs = false;
+            // else if (fdata.cFileName[1] == 0)
+            //    cut_dot_dirs = true;
+            // else if (fdata.cFileName[1] == '.' && fdata.cFileName[2] == 0)
+            //    cut_dot_dirs = true;
+            // else
+            //    cut_dot_dirs = false;
 
             if (!cut_dot_dirs) {
-               // cur_node->directs++;
-               // cur_node->subdirects++;
-
                dirs *dtemp = new_dir_node ();
                if (cur_node->sons == NULL)
                   cur_node->sons = dtemp;
@@ -214,7 +203,7 @@ debug_dump(dirpath, tempstr) ;
                
                dtemp->name = (char *) malloc(strlen ((char *) fdata.cFileName) + 1);
                strcpy (dtemp->name, (char *) fdata.cFileName);
-               dtemp->attrib = (uchar) fdata.dwFileAttributes;
+               // dtemp->attrib = (uchar) fdata.dwFileAttributes;
             }                   //  if this is not a DOT directory
          }                      //  if this is a directory
 
@@ -228,7 +217,7 @@ debug_dump(dirpath, tempstr) ;
             }
             memset((char *) ftemp, 0, sizeof(ffdata));
 
-            ftemp->attrib = (uchar) fdata.dwFileAttributes;
+            // ftemp->attrib = (uchar) fdata.dwFileAttributes;
 
             //  convert file time
             // if (n.fdate_option == FDATE_LAST_ACCESS)
@@ -248,22 +237,20 @@ debug_dump(dirpath, tempstr) ;
             ftemp->filename = (char *) malloc(strlen ((char *) fdata.cFileName) + 1);
             strcpy (ftemp->filename, (char *) fdata.cFileName);
 
-            strptr = _tcsrchr (ftemp->name, '.');
-            if (strptr != 0 && _tcslen (strptr) <= MAX_EXT_SIZE) {
-               _tcscpy (ftemp->ext, strptr);
-               *strptr = 0;        //  NULL-term name field
-               
-               //  12/12/23  Add handling for .lnk files
-               if (strcasecmp(ftemp->ext, ".lnk") == 0) {
-                  ftemp->is_link_file = true ;
+            strptr = strrchr (ftemp->filename, '.');
+            if (strptr != NULL) {
+               strptr++ ;  //  skip past period
+               if (strlen (strptr) <= MAX_EXT_LEN) {
+                  strcpy (ftemp->ext, strptr);
+               }
+               else {
+                  ftemp->ext[0] = 0;  //  no extension found
                }
             }
             else {
                ftemp->ext[0] = 0;  //  no extension found
             }
             
-            ftemp->dirflag = ftemp->attrib & FILE_ATTRIBUTE_DIRECTORY;
-
             //****************************************************
             //  add the structure to the file list
             //****************************************************
@@ -346,26 +333,8 @@ static int build_dir_tree (char *tpath)
    char *strptr;
    level = 0;
 
-   //  Extract base path from first filespec,
-   //  and strip off filename
-   // strcpy (base_path, tpath);
-   // strptr = strrchr (base_path, '\\');
-   // if (strptr == NULL) {
-   //    printf("no path part found: %s\n", tpath);
-   //    return ERROR_FILE_NOT_FOUND ;
-   // }
-   // *(++strptr) = 0;          //  strip off filename
-
    //  allocate struct for dir listing
    top = new_dir_node ();
-
-   //  Extract base path from first filespec,
-   //  and strip off filename
-   // strcpy (base_path, tpath);
-   // strptr = strrchr (base_path, '\\');
-   // strptr++;                    //  skip past backslash, to filename
-   // *strptr = 0;                 //  strip off filename
-   // base_len = strlen (base_path);
 
    //  derive root path name
    if (strlen (base_path) == 3) {
@@ -391,8 +360,6 @@ static int build_dir_tree (char *tpath)
       }
       strcpy (top->name, strptr);
    }
-
-   // top->attrib = 0 ;   //  top-level dir is always displayed
 
    strcpy (dirpath, tpath);
 
