@@ -16,6 +16,7 @@ typedef  unsigned char        u8  ;
 typedef  unsigned short       u16 ;
 typedef  unsigned int         u32 ;
 
+//lint -esym(755, FILE_ATTRIBUTE_VOLID)  // global macro not referenced
 //  this definition was excluded by WINNT.H
 #define FILE_ATTRIBUTE_VOLID  0x00000008
 

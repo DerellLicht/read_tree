@@ -67,6 +67,6 @@ $(BIN): $(OBJS)
 
 # DO NOT DELETE
 
-read_tree.o: common.h read_tree.h qualify.h
+read_tree.o: common.h qualify.h
 common.o: common.h
 qualify.o: qualify.h
