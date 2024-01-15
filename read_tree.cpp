@@ -154,9 +154,11 @@ static int read_dir_tree (dirs * cur_node)
    //  loop on find_next
    done = false;
    while (!done) {
-      //  this err will only occur when unreadable files are encounter in a folder
+      //  this err will only occur when unreadable files are encountered in a folder
       if (err == 0) {
-         //  we found a directory
+         //***********************************************************************
+         //  process folders (formerly directories)
+         //***********************************************************************
          if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             bool cut_dot_dirs;
 
@@ -188,7 +190,9 @@ static int read_dir_tree (dirs * cur_node)
             }                   //  if this is not a DOT directory
          }                      //  if this is a directory
 
-         //  we found a normal file
+         //***********************************************************************
+         //  process normal files
+         //***********************************************************************
          else {
             //  In this tree scanner, we will build a file list for each folder
             // ftemp = new ffdata;
