@@ -31,8 +31,6 @@ int _CRT_glob = 0 ;
 
 uint filecount = 0 ;
 
-char tempstr[MAX_PATH+1];
-
 static char formstr[50];
 
 char file_spec[PATH_MAX+1] = "" ;
@@ -299,6 +297,7 @@ static int build_dir_tree (char *tpath)
    int result ;
    char *strptr;
    level = 0;
+   char tempstr[MAX_PATH+1];
    
 // tpath: D:\SourceCode\Git\read_folder_tree\*
 // bpath: D:\SourceCode\Git\read_folder_tree
