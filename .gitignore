@@ -4,3 +4,4 @@ _lint.tmp
 *.bak
 *.o
 folder.file.list.txt
+test_dir/

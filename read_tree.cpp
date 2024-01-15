@@ -15,10 +15,9 @@
 #include <stdlib.h>  //  PATH_MAX
 
 //  remove this define to remove all the debug messages
-// #define  DESPERATE
+// #define  DBG_TRACE
 
 #include "common.h"
-// #include "read_tree.h"
 #include "qualify.h"
 
 //lint -esym(534, FindClose)  // Ignoring return value of function
@@ -54,6 +53,9 @@ typedef struct ffdata {
 static char dirpath[PATH_MAX];
 unsigned level;
 
+static char dir_full_path[PATH_MAX];
+static uint dir_fpath_len = 0 ;
+
 //**********************************************************
 //  directory structure for directory_tree routines
 //**********************************************************
@@ -62,6 +64,7 @@ struct dirs
    dirs *brothers;
    dirs *sons;
    char *name;
+   char *fpath ;
    ffdata_p ftop ;
 };
 
@@ -70,7 +73,7 @@ dirs *top = NULL;
 //*****************************************************************
 //  this was used for debugging directory-tree read and build
 //*****************************************************************
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 void debug_dump(char *fname, char *msg)
 {
    syslog("l%u %s: %s\n", level, fname, msg) ;  //  debug dump
@@ -94,9 +97,6 @@ static dirs *new_dir_node (void)
    //     179200 ->     72704   40.57%    win64/pe     ndir64.exe
    // dirs *dtemp = new dirs ;
    ZeroMemory(dtemp, sizeof (struct dirs));  //lint !e668
-   // memset ((char *) dtemp, 0, sizeof (struct dirs));  //lint !e668
-   // dtemp->dirsecsize = clbytes;
-   // dtemp->subdirsecsize = clbytes;
    return dtemp;
 }
 
@@ -108,7 +108,8 @@ static int read_dir_tree (dirs * cur_node)
    dirs *dtail = 0;
    char *strptr;
    HANDLE handle;
-   size_t slen ;
+   size_t dir_path_len ;
+   uint slen ;
    bool done ;
    DWORD err;
    // ULONGLONG file_clusters, clusters;
@@ -123,27 +124,32 @@ static int read_dir_tree (dirs * cur_node)
    //  dirpath is already complete
    if (level > 0) {
       //  insert new path name
-      strptr = strrchr (dirpath, '\\');
+      strptr = strrchr(dirpath, '\\');
       if (strptr == NULL) {
          printf("no path end found: %s\n", dirpath);
-         slen = strlen (dirpath);
+         dir_path_len = strlen(dirpath);
       }
       else {
          strptr++;
          *strptr = 0;
-         slen = strlen (dirpath);
-         strcat (dirpath, cur_node->name);
-         strcat (dirpath, "\\*");
+         dir_path_len = strlen(dirpath);
+         strcat(dirpath, cur_node->name);
+         strcpy(dir_full_path, dirpath);
+         dir_fpath_len = strlen(dir_full_path) ;
+         strcat(dirpath, "\\*");
       }
    }
    else {
-      slen = strlen (dirpath);
+      // printf("dirpath: %s\n", dirpath);
+      dir_path_len = strlen(dirpath);
+      strcpy(dir_full_path, base_path);
+      dir_fpath_len = strlen(dir_full_path) ;
    }
 
    //  first, build tree list for current level
    level++;
 
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 debug_dump(dirpath, "entry") ;
 #endif
    err = 0;
@@ -152,13 +158,13 @@ debug_dump(dirpath, "entry") ;
    if (handle == INVALID_HANDLE_VALUE) {
       err = GetLastError ();
       if (err == ERROR_ACCESS_DENIED) {
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 debug_dump(dirpath, "FindFirstFile denied") ;
 #endif
          ;                     //  continue reading
       }
       else {
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 sprintf (tempstr, "FindNext: %s\n", get_system_message (err));
 debug_dump(dirpath, tempstr) ;
 #endif
@@ -177,21 +183,13 @@ debug_dump(dirpath, tempstr) ;
 
             // printf("DIRECTORY %04X %s\n", fdata.attrib, fdata.fname) ;
             //  skip '.' and '..', but NOT .ncftp (for example)
-            if (strcmp(fdata.cFileName, ".") == 0  ||
+            if (strcmp(fdata.cFileName, ".")  == 0  ||
                 strcmp(fdata.cFileName, "..") == 0) {
                cut_dot_dirs = true;
             }
             else {
                cut_dot_dirs = false;
             }
-            // if (fdata.cFileName[0] != '.')
-            //    cut_dot_dirs = false;
-            // else if (fdata.cFileName[1] == 0)
-            //    cut_dot_dirs = true;
-            // else if (fdata.cFileName[1] == '.' && fdata.cFileName[2] == 0)
-            //    cut_dot_dirs = true;
-            // else
-            //    cut_dot_dirs = false;
 
             if (!cut_dot_dirs) {
                dirs *dtemp = new_dir_node ();
@@ -203,7 +201,11 @@ debug_dump(dirpath, tempstr) ;
                
                dtemp->name = (char *) malloc(strlen ((char *) fdata.cFileName) + 1);
                strcpy (dtemp->name, (char *) fdata.cFileName);
-               // dtemp->attrib = (uchar) fdata.dwFileAttributes;
+               slen = dir_fpath_len + 1 + strlen(fdata.cFileName) + 2 ;
+               dtemp->fpath = (char *) malloc(slen);
+               
+               sprintf(dtemp->fpath, "%s\\%s\\", dir_full_path, fdata.cFileName);
+               // printf("<%s>\n", dtemp->fpath);
             }                   //  if this is not a DOT directory
          }                      //  if this is a directory
 
@@ -271,7 +273,7 @@ debug_dump(dirpath, tempstr) ;
          // done = true;
          err = GetLastError ();
          if (err == ERROR_ACCESS_DENIED) {
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 debug_dump(fdata.cFileName, "denied") ;
 #else
             ;                     //  continue reading
@@ -281,7 +283,7 @@ debug_dump(fdata.cFileName, "denied") ;
             done = true ;
          }
          else {
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 sprintf (tempstr, "FindNext: %s\n", get_system_message (err));
 debug_dump(dirpath, tempstr) ;
 #endif
@@ -292,7 +294,7 @@ debug_dump(dirpath, tempstr) ;
       }
    }  //  while reading files from directory
    
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 debug_dump(dirpath, "close") ;
 #endif
    FindClose (handle);
@@ -303,7 +305,7 @@ debug_dump(dirpath, "close") ;
    //  next, build tree lists for subsequent levels (recursive)
    dirs *ktemp = cur_node->sons;
    while (ktemp != NULL) {
-#ifdef  DESPERATE
+#ifdef  DBG_TRACE
 if (ktemp == 0) 
    debug_dump("[NULL]", "call read_dir_tree") ;
 else
@@ -319,7 +321,7 @@ else
    }
 
    //  when done, strip name from path and restore '\*.*'
-   strcpy(&dirpath[slen], "*");  //lint !e669  string overrun??
+   strcpy(&dirpath[dir_path_len], "*");  //lint !e669  string overrun??
 
    //  restore the level number
    level--;
@@ -332,8 +334,14 @@ static int build_dir_tree (char *tpath)
    int result ;
    char *strptr;
    level = 0;
+   
+// tpath: D:\SourceCode\Git\read_folder_tree\*
+// bpath: D:\SourceCode\Git\read_folder_tree
+// dirpath: D:\SourceCode\Git\read_folder_tree\*
+   // printf("tpath: %s\n", tpath);
+   // printf("bpath: %s\n", base_path);
 
-   //  allocate struct for dir listing
+   //  allocate top-level struct for dir listing
    top = new_dir_node ();
 
    //  derive root path name
@@ -346,7 +354,7 @@ static int build_dir_tree (char *tpath)
    }
    else {
       strcpy (tempstr, base_path);
-      tempstr[base_len - 1] = 0; //  strip off tailing backslash
+      //tempstr[base_len - 1] = 0; //  strip off tailing backslash
       strptr = strrchr (tempstr, '\\');
       if (strptr == NULL) {
          printf("no path end found: %s\n", dirpath);
@@ -354,6 +362,7 @@ static int build_dir_tree (char *tpath)
       }
       strptr++;                 //  skip past backslash, to filename
 
+      // printf("L%u top folder: %s\n", level, strptr);
       top->name = (char *) malloc(strlen (strptr) + 1);
       if (top->name == NULL) {
          return ERROR_OUTOFMEMORY ;
@@ -362,17 +371,23 @@ static int build_dir_tree (char *tpath)
    }
 
    strcpy (dirpath, tpath);
+   strcpy(dir_full_path, base_path);
+   dir_fpath_len = strlen(dir_full_path) ;
+   
+   DWORD slen = strlen(base_path);
+   top->fpath = (char *) malloc(slen+2);
+   sprintf(top->fpath, "%s\\", base_path);
 
    result = read_dir_tree (top);
    return result ;
 }  //lint !e818
 
 //**********************************************************
-static void display_file_list(ffdata_p ftop)
+static void display_file_list(char *full_path, ffdata_p ftop)
 {
    //  now, do something with the files that you found   
    for (ffdata *ftemp = ftop; ftemp != NULL; ftemp = ftemp->next) {
-      printf("%s\n", ftemp->filename);
+      printf("%s\\%s\n", full_path, ftemp->filename);
    }
    puts("");
 }
@@ -380,10 +395,15 @@ static void display_file_list(ffdata_p ftop)
 //**********************************************************
 static void display_tree_filename (char *frmstr, dirs const * const ktemp)
 {
-   printf("%s[%s]\n", frmstr, ktemp->name) ;
-   
+   if (ktemp->fpath == NULL) {
+      printf("%s[%s]\n", frmstr, "<NULL>") ;
+   }
+   else {
+      printf("%s[%s]\n", frmstr, ktemp->fpath) ;
+   }
+
    if (ktemp->ftop != NULL) {
-      display_file_list(ktemp->ftop);
+      display_file_list(ktemp->fpath, ktemp->ftop);
    }
 }
 
@@ -429,9 +449,7 @@ static void display_dir_tree (dirs * ktop)
 
       //  process any sons
       level++;
-      // if (level <= tree_level_limit) {
-         display_dir_tree(ktemp->sons);
-      // }
+      display_dir_tree(ktemp->sons);
       formstr[--level] = (char) NULL;
 
       //  goto next brother
@@ -468,7 +486,7 @@ int main(int argc, char **argv)
    strcpy(base_path, file_spec) ;
    char *strptr = strrchr(base_path, '\\') ;
    if (strptr != 0) {
-       strptr++ ;  //lint !e613  skip past backslash, to filename
+       // strptr++ ;  //lint !e613  skip past backslash, to filename
       *strptr = 0 ;  //  strip off filename
    }
    base_len = strlen(base_path) ;
