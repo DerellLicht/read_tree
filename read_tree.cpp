@@ -34,6 +34,8 @@ char tempstr[MAX_PATH+1];
 
 static char formstr[50];
 
+char file_spec[PATH_MAX+1] = "" ;
+
 //lint -esym(613, ftail)  //  Possible use of null pointer in left argument to operator '->' 
 //************************************************************
 #define  MAX_EXT_LEN    6
@@ -350,7 +352,7 @@ static void display_file_list(char *full_path, ffdata_p ftop)
 {
    //  now, do something with the files that you found   
    for (ffdata *ftemp = ftop; ftemp != NULL; ftemp = ftemp->next) {
-      execute_file_operation(full_path, ftop);
+      execute_file_operation(full_path, ftemp);
    }
    puts("");
 }
@@ -421,44 +423,70 @@ static void display_dir_tree (dirs * ktop)
 }
 
 //**********************************************************************************
-char file_spec[PATH_MAX+1] = "" ;
+void usage(void)
+{
+   puts("Usage: read_tree [base_folder] [target_file_extension]");
+   puts("");
+   puts("base_folder is required; to specify current folder, use period (.)");
+}
 
+//**********************************************************************************
 int main(int argc, char **argv)
 {
    int idx, result ;
+   uint arg_count = 0 ;
+   char path_spec[PATH_MAX+1] = "" ;
+   
    for (idx=1; idx<argc; idx++) {
       char *p = argv[idx] ;
-      strncpy(file_spec, p, PATH_MAX);
-      file_spec[PATH_MAX] = 0 ;
+      switch(arg_count) {
+      case 0:
+         strncpy(path_spec, p, PATH_MAX);
+         path_spec[PATH_MAX] = 0 ;
+         arg_count++ ;
+         break ;
+            
+      case 1:
+         strncpy(file_spec, p, PATH_MAX);
+         file_spec[PATH_MAX] = 0 ;
+         arg_count++ ;
+         break ;
+            
+      default:
+         usage();
+         return 1 ;
+      }
    }
 
-   if (file_spec[0] == 0) {
-      strcpy(file_spec, ".");
+   if (path_spec[0] == 0) {
+      // strcpy(path_spec, ".");
+      usage();
+      return 1;
    }
 
-   uint qresult = qualify(file_spec) ;
+   uint qresult = qualify(path_spec) ;
    if (qresult == QUAL_INV_DRIVE) {
-      printf("%s: 0x%X\n", file_spec, qresult);
+      printf("%s: 0x%X\n", path_spec, qresult);
       return 1 ;
    }
-   // printf("file spec: %s\n", file_spec);
+   printf("path spec: %s\n", path_spec);
 
    //  Extract base path from first filespec, and strip off filename.
    //  base_path becomes useful when one wishes to perform
    //  multiple searches in one path.
-   strcpy(base_path, file_spec) ;
+   strcpy(base_path, path_spec) ;
    char *strptr = strrchr(base_path, '\\') ;
    if (strptr != 0) {
        // strptr++ ;  //lint !e613  skip past backslash, to filename
       *strptr = 0 ;  //  strip off filename
    }
    base_len = strlen(base_path) ;
-   // printf("base path: %s\n", base_path);
+   printf("base path: %s\n", base_path);
    
-   result = build_dir_tree(file_spec) ;
-   // result = read_files(file_spec);
+   result = build_dir_tree(path_spec) ;
+   // result = read_files(path_spec);
    if (result < 0) {
-      printf("build_dir_tree: %s, %s\n", file_spec, strerror(-result));
+      printf("build_dir_tree: %s, %s\n", path_spec, strerror(-result));
       return 1 ;
    }
 
