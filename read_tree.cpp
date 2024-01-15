@@ -202,10 +202,11 @@ static int read_dir_tree (dirs * cur_node)
                if (strptr == NULL) {
                   skip_this_file = true ;
                }
-               else {
-                  if (strcasecmp(strptr, file_spec) != 0) {
-                     skip_this_file = true ;
-                  }
+               else if (strlen (strptr) > (MAX_EXT_LEN+1)) {
+                  skip_this_file = true ;
+               }
+               else if (strcasecmp(strptr, file_spec) != 0) {
+                  skip_this_file = true ;
                }
             }
          
