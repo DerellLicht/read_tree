@@ -308,8 +308,7 @@ static int build_dir_tree (char *tpath)
    //  derive root path name
    strptr = strrchr (base_path, '\\');
    if (strptr == NULL) {
-      // printf("no path end found: %s\n", dirpath);
-      // return ERROR_FILE_NOT_FOUND ;
+      //  this should never happen, since base_path is qualified
       static char const * const root_str = "<root>" ;
       top->name = (char *) malloc(strlen (root_str) + 1);
       if (top->name == NULL) {
@@ -474,7 +473,7 @@ int main(int argc, char **argv)
       printf("%s: 0x%X\n", path_spec, qresult);
       return 1 ;
    }
-   printf("path spec: %s\n", path_spec);
+   // printf("path spec: %s\n", path_spec);
 
    //  Extract base path from first filespec, and strip off filename.
    //  base_path becomes useful when one wishes to perform
@@ -486,7 +485,7 @@ int main(int argc, char **argv)
       *strptr = 0 ;  //  strip off filename
    }
    base_len = strlen(base_path) ;
-   printf("base path: %s\n", base_path);
+   // printf("base path: %s\n", base_path);
    
    result = build_dir_tree(path_spec) ;
    // result = read_files(path_spec);
