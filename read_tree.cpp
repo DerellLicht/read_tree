@@ -194,58 +194,75 @@ static int read_dir_tree (dirs * cur_node)
          //  process normal files
          //***********************************************************************
          else {
-            //  In this tree scanner, we will build a file list for each folder
-            // ftemp = new ffdata;
-            ftemp = (struct ffdata *) malloc(sizeof(ffdata)) ;
-            if (ftemp == NULL) {
-               return -errno;
+            // char local_ext[MAX_EXT_LEN+1] = "";
+            bool skip_this_file = false ;
+            
+            if (file_spec[0] != 0) {
+               strptr = strrchr (fdata.cFileName, '.');
+               if (strptr == NULL) {
+                  skip_this_file = true ;
+               }
+               else {
+                  if (strcasecmp(strptr, file_spec) != 0) {
+                     skip_this_file = true ;
+                  }
+               }
             }
-            memset((char *) ftemp, 0, sizeof(ffdata));
+         
+            if (!skip_this_file) {
+               //  In this tree scanner, we will build a file list for each folder
+               // ftemp = new ffdata;
+               ftemp = (struct ffdata *) malloc(sizeof(ffdata)) ;
+               if (ftemp == NULL) {
+                  return -errno;
+               }
+               memset((char *) ftemp, 0, sizeof(ffdata));
 
-            // ftemp->attrib = (uchar) fdata.dwFileAttributes;
+               // ftemp->attrib = (uchar) fdata.dwFileAttributes;
 
-            //  convert file time
-            // if (n.fdate_option == FDATE_LAST_ACCESS)
-            //    ftemp->ft = fdata.ftLastAccessTime;
-            // else if (n.fdate_option == FDATE_CREATE_TIME)
-            //    ftemp->ft = fdata.ftCreationTime;
-            // else
-            //    ftemp->ft = fdata.ftLastWriteTime;
-            ftemp->ft = fdata.ftLastAccessTime;
+               //  convert file time
+               // if (n.fdate_option == FDATE_LAST_ACCESS)
+               //    ftemp->ft = fdata.ftLastAccessTime;
+               // else if (n.fdate_option == FDATE_CREATE_TIME)
+               //    ftemp->ft = fdata.ftCreationTime;
+               // else
+               //    ftemp->ft = fdata.ftLastWriteTime;
+               ftemp->ft = fdata.ftLastAccessTime;
 
-            //  convert file size
-            u64toul iconv;
-            iconv.u[0] = fdata.nFileSizeLow;
-            iconv.u[1] = fdata.nFileSizeHigh;
-            ftemp->fsize = iconv.i;
+               //  convert file size
+               u64toul iconv;
+               iconv.u[0] = fdata.nFileSizeLow;
+               iconv.u[1] = fdata.nFileSizeHigh;
+               ftemp->fsize = iconv.i;
 
-            ftemp->filename = (char *) malloc(strlen ((char *) fdata.cFileName) + 1);
-            strcpy (ftemp->filename, (char *) fdata.cFileName);
+               ftemp->filename = (char *) malloc(strlen ((char *) fdata.cFileName) + 1);
+               strcpy (ftemp->filename, (char *) fdata.cFileName);
 
-            strptr = strrchr (ftemp->filename, '.');
-            if (strptr != NULL) {
-               strptr++ ;  //  skip past period
-               if (strlen (strptr) <= MAX_EXT_LEN) {
-                  strcpy (ftemp->ext, strptr);
+               strptr = strrchr (fdata.cFileName, '.');
+               if (strptr != NULL) {
+                  strptr++ ;  //  skip past period
+                  if (strlen (strptr) <= MAX_EXT_LEN) {
+                     strcpy (ftemp->ext, strptr);
+                  }
+                  else {
+                     ftemp->ext[0] = 0;  //  no extension found
+                  }
                }
                else {
                   ftemp->ext[0] = 0;  //  no extension found
                }
+               
+               //****************************************************
+               //  add the structure to the file list
+               //****************************************************
+               if (ftop == NULL) {
+                  ftop = ftemp;
+               }
+               else {
+                  ftail->next = ftemp;
+               }
+               ftail = ftemp;
             }
-            else {
-               ftemp->ext[0] = 0;  //  no extension found
-            }
-            
-            //****************************************************
-            //  add the structure to the file list
-            //****************************************************
-            if (ftop == NULL) {
-               ftop = ftemp;
-            }
-            else {
-               ftail->next = ftemp;
-            }
-            ftail = ftemp;
          }                      //  if entry is a file
       }                         //  if no errors detected
 
@@ -348,7 +365,7 @@ static int build_dir_tree (char *tpath)
 //***********************************************************************
 static void execute_file_operation(char *full_path, ffdata_p ftemp)
 {
-   printf("%s\\%s\n", full_path, ftemp->filename);
+   printf("%s%s\n", full_path, ftemp->filename);
 }  //lint !e818
       
 //**********************************************************
@@ -432,6 +449,8 @@ void usage(void)
    puts("Usage: read_tree [base_folder] [target_file_extension]");
    puts("");
    puts("base_folder is required; to specify current folder, use period (.)");
+   puts("");
+   puts("file_extension must include period; example: .cpp");
 }
 
 //**********************************************************************************
