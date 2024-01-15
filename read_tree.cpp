@@ -383,7 +383,10 @@ static void display_tree_filename (char *frmstr, dirs const * const ktemp)
 //**********************************************************
 static void display_dir_tree (dirs * ktop)
 {
-   static char formstr[50];
+   //  formstr will contain one character for each level of folder depth
+   //  below the base folder.
+#define  MAX_FORM_LEN   40   
+   static char formstr[MAX_FORM_LEN+1];
 
    dirs *ktemp = ktop;
    if (ktop == NULL)
