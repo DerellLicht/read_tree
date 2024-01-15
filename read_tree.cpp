@@ -44,7 +44,6 @@ typedef struct ffdata {
    FILETIME       ft ;
    ULONGLONG      fsize ;
    char           *filename ;
-   char           ext[MAX_EXT_LEN+1];
    struct ffdata  *next ;
 } ffdata_t, *ffdata_p;
 
@@ -239,20 +238,6 @@ static int read_dir_tree (dirs * cur_node)
                ftemp->filename = (char *) malloc(strlen ((char *) fdata.cFileName) + 1);
                strcpy (ftemp->filename, (char *) fdata.cFileName);
 
-               strptr = strrchr (fdata.cFileName, '.');
-               if (strptr != NULL) {
-                  strptr++ ;  //  skip past period
-                  if (strlen (strptr) <= MAX_EXT_LEN) {
-                     strcpy (ftemp->ext, strptr);
-                  }
-                  else {
-                     ftemp->ext[0] = 0;  //  no extension found
-                  }
-               }
-               else {
-                  ftemp->ext[0] = 0;  //  no extension found
-               }
-               
                //****************************************************
                //  add the structure to the file list
                //****************************************************
