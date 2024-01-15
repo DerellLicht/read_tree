@@ -31,8 +31,6 @@ int _CRT_glob = 0 ;
 
 uint filecount = 0 ;
 
-static char formstr[50];
-
 char file_spec[PATH_MAX+1] = "" ;
 
 //lint -esym(613, ftail)  //  Possible use of null pointer in left argument to operator '->' 
@@ -385,6 +383,8 @@ static void display_tree_filename (char *frmstr, dirs const * const ktemp)
 //**********************************************************
 static void display_dir_tree (dirs * ktop)
 {
+   static char formstr[50];
+
    dirs *ktemp = ktop;
    if (ktop == NULL)
       return;
