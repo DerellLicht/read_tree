@@ -1,8 +1,9 @@
 //**********************************************************************************
-//  read_files.cpp 
-//  This will be a generic utility to identify all files specified 
-//  by a provided file spec with wildcards
-//  This is intended as a template for reading all files in current directory,
+//  read_tree.cpp 
+//  This will be a generic utility to recursively search through all folders
+//  below specified target folder, and locate all files meeting the
+//  specified file extension.
+//  This is intended as a template for reading all files in current folder tree,
 //  then performing some task on them.  The print statement at the end
 //  can be replaced with a function call to perform the desired operation
 //  on each discovered file.
