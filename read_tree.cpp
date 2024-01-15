@@ -295,7 +295,6 @@ static int build_dir_tree (char *tpath)
    int result ;
    char *strptr;
    level = 0;
-   char tempstr[MAX_PATH+1];
    
 // tpath: D:\SourceCode\Git\read_folder_tree\*
 // bpath: D:\SourceCode\Git\read_folder_tree
@@ -307,21 +306,18 @@ static int build_dir_tree (char *tpath)
    top = new_dir_node ();
 
    //  derive root path name
-   if (strlen (base_path) == 3) {
-      top->name = (char *) malloc(8) ;
-      if (top->name == 0) {
+   strptr = strrchr (base_path, '\\');
+   if (strptr == NULL) {
+      // printf("no path end found: %s\n", dirpath);
+      // return ERROR_FILE_NOT_FOUND ;
+      static char const * const root_str = "<root>" ;
+      top->name = (char *) malloc(strlen (root_str) + 1);
+      if (top->name == NULL) {
          return ERROR_OUTOFMEMORY ;
       }
-      strcpy (top->name, "<root>");
+      strcpy (top->name, root_str);
    }
    else {
-      strcpy (tempstr, base_path);
-      //tempstr[base_len - 1] = 0; //  strip off tailing backslash
-      strptr = strrchr (tempstr, '\\');
-      if (strptr == NULL) {
-         printf("no path end found: %s\n", dirpath);
-         return ERROR_FILE_NOT_FOUND ;
-      }
       strptr++;                 //  skip past backslash, to filename
 
       // printf("L%u top folder: %s\n", level, strptr);
@@ -347,9 +343,9 @@ static int build_dir_tree (char *tpath)
 //***********************************************************************
 //  This is the function which actually does the work in the application
 //***********************************************************************
-static void execute_file_operation(char *full_path, ffdata_p ftemp)
+static void execute_file_operation(char *full_path, char *filename)
 {
-   printf("%s%s\n", full_path, ftemp->filename);
+   printf("%s%s\n", full_path, filename);
 }  //lint !e818
       
 //**********************************************************
@@ -357,7 +353,7 @@ static void display_file_list(char *full_path, ffdata_p ftop)
 {
    //  now, do something with the files that you found   
    for (ffdata *ftemp = ftop; ftemp != NULL; ftemp = ftemp->next) {
-      execute_file_operation(full_path, ftemp);
+      execute_file_operation(full_path, ftemp->filename);
    }
    puts("");
 }
@@ -365,10 +361,7 @@ static void display_file_list(char *full_path, ffdata_p ftop)
 //**********************************************************
 static void display_tree_filename (char *frmstr, dirs const * const ktemp)
 {
-   if (ktemp->fpath == NULL) {
-      printf("%s[%s]\n", frmstr, "<NULL>") ;
-   }
-   else {
+   if (ktemp->fpath != NULL) {
       printf("%s[%s]\n", frmstr, ktemp->fpath) ;
    }
 
