@@ -14,9 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>  //  PATH_MAX
 
-//  remove this define to remove all the debug messages
-// #define  DBG_TRACE
-
 #include "common.h"
 #include "qualify.h"
 
@@ -69,16 +66,6 @@ struct dirs
 };
 
 dirs *top = NULL;
-
-//*****************************************************************
-//  this was used for debugging directory-tree read and build
-//*****************************************************************
-#ifdef  DBG_TRACE
-void debug_dump(char *fname, char *msg)
-{
-   syslog("l%u %s: %s\n", level, fname, msg) ;  //  debug dump
-}
-#endif
 
 //**********************************************************
 //  allocate struct for dir listing                         
@@ -149,25 +136,15 @@ static int read_dir_tree (dirs * cur_node)
    //  first, build tree list for current level
    level++;
 
-#ifdef  DBG_TRACE
-debug_dump(dirpath, "entry") ;
-#endif
    err = 0;
    
    handle = FindFirstFile(dirpath, &fdata);
    if (handle == INVALID_HANDLE_VALUE) {
       err = GetLastError ();
       if (err == ERROR_ACCESS_DENIED) {
-#ifdef  DBG_TRACE
-debug_dump(dirpath, "FindFirstFile denied") ;
-#endif
          ;                     //  continue reading
       }
       else {
-#ifdef  DBG_TRACE
-sprintf (tempstr, "FindNext: %s\n", get_system_message (err));
-debug_dump(dirpath, tempstr) ;
-#endif
          return (int) err ;
       }
    }
@@ -273,20 +250,12 @@ debug_dump(dirpath, tempstr) ;
          // done = true;
          err = GetLastError ();
          if (err == ERROR_ACCESS_DENIED) {
-#ifdef  DBG_TRACE
-debug_dump(fdata.cFileName, "denied") ;
-#else
             ;                     //  continue reading
-#endif
          }
          else if (err == ERROR_NO_MORE_FILES) {
             done = true ;
          }
          else {
-#ifdef  DBG_TRACE
-sprintf (tempstr, "FindNext: %s\n", get_system_message (err));
-debug_dump(dirpath, tempstr) ;
-#endif
             done = true ;
          }
       } else {
@@ -294,9 +263,6 @@ debug_dump(dirpath, tempstr) ;
       }
    }  //  while reading files from directory
    
-#ifdef  DBG_TRACE
-debug_dump(dirpath, "close") ;
-#endif
    FindClose (handle);
 
    //  how do we tack ftemp onto current folder ??
@@ -305,18 +271,7 @@ debug_dump(dirpath, "close") ;
    //  next, build tree lists for subsequent levels (recursive)
    dirs *ktemp = cur_node->sons;
    while (ktemp != NULL) {
-#ifdef  DBG_TRACE
-if (ktemp == 0) 
-   debug_dump("[NULL]", "call read_dir_tree") ;
-else
-   debug_dump(ktemp->name, "call read_dir_tree") ;
-#endif
       read_dir_tree (ktemp);  //lint !e534
-      // cur_node->subdirsize += ktemp->subdirsize;
-      // cur_node->subdirsecsize += ktemp->subdirsecsize;
-
-      // cur_node->subfiles += ktemp->subfiles;
-      // cur_node->subdirects += ktemp->subdirects;
       ktemp = ktemp->brothers;
    }
 
@@ -388,7 +343,7 @@ static int build_dir_tree (char *tpath)
 static void execute_file_operation(char *full_path, ffdata_p ftemp)
 {
    printf("%s\\%s\n", full_path, ftemp->filename);
-}
+}  //lint !e818
       
 //**********************************************************
 static void display_file_list(char *full_path, ffdata_p ftop)
