@@ -382,12 +382,20 @@ static int build_dir_tree (char *tpath)
    return result ;
 }  //lint !e818
 
+//***********************************************************************
+//  This is the function which actually does the work in the application
+//***********************************************************************
+static void execute_file_operation(char *full_path, ffdata_p ftemp)
+{
+   printf("%s\\%s\n", full_path, ftemp->filename);
+}
+      
 //**********************************************************
 static void display_file_list(char *full_path, ffdata_p ftop)
 {
    //  now, do something with the files that you found   
    for (ffdata *ftemp = ftop; ftemp != NULL; ftemp = ftemp->next) {
-      printf("%s\\%s\n", full_path, ftemp->filename);
+      execute_file_operation(full_path, ftop);
    }
    puts("");
 }
