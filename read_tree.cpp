@@ -360,10 +360,12 @@ static void display_file_list(char *full_path, ffdata_p ftop)
 //**********************************************************
 static void display_tree_filename (char *frmstr, dirs const * const ktemp)
 {
+   //  display folder list
    if (ktemp->fpath != NULL) {
       printf("%s[%s]\n", frmstr, ktemp->fpath) ;
    }
 
+   //  display file list
    if (ktemp->ftop != NULL) {
       display_file_list(ktemp->fpath, ktemp->ftop);
    }
