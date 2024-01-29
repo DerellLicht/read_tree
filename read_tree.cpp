@@ -18,6 +18,8 @@
 #include "common.h"
 #include "qualify.h"
 
+//  #define  SHOW_FOLDER_NAMES    
+
 //lint -esym(534, FindClose)  // Ignoring return value of function
 //lint -esym(534, __builtin_va_start, vsprintf)
 //lint -esym(818, filespec, argv)  //could be declared as pointing to const
@@ -50,6 +52,11 @@ unsigned level;
 
 static char dir_full_path[PATH_MAX];
 static uint dir_fpath_len = 0 ;
+
+//***********************************************************************
+//  This is the function which actually does the work in the application
+//***********************************************************************
+static void execute_file_operation(char *full_path, char *filename);
 
 //**********************************************************
 //  directory structure for directory_tree routines
@@ -207,6 +214,7 @@ static int read_dir_tree (dirs * cur_node)
             }
          
             if (!skip_this_file) {
+               // printf("<%s>\n", fdata.cFileName);
                //  In this tree scanner, we will build a file list for each folder
                // ftemp = new ffdata;
                ftemp = (struct ffdata *) malloc(sizeof(ffdata)) ;
@@ -339,14 +347,6 @@ static int build_dir_tree (char *tpath)
    return result ;
 }  //lint !e818
 
-//***********************************************************************
-//  This is the function which actually does the work in the application
-//***********************************************************************
-static void execute_file_operation(char *full_path, char *filename)
-{
-   printf("%s%s\n", full_path, filename);
-}  //lint !e818
-      
 //**********************************************************
 static void display_file_list(char *full_path, ffdata_p ftop)
 {
@@ -358,12 +358,16 @@ static void display_file_list(char *full_path, ffdata_p ftop)
 }
 
 //**********************************************************
-static void display_tree_filename (char *frmstr, dirs const * const ktemp)
+//lint -esym(715, frmstr)
+//lint -esym(818, frmstr)
+static void display_tree_filename (char const * const frmstr, dirs const * const ktemp)
 {
+#ifdef SHOW_FOLDER_NAMES
    //  display folder list
    if (ktemp->fpath != NULL) {
       printf("%s[%s]\n", frmstr, ktemp->fpath) ;
    }
+#endif   
 
    //  display file list
    if (ktemp->ftop != NULL) {
@@ -434,6 +438,7 @@ void usage(void)
    puts("base_folder is required; to specify current folder, use period (.)");
    puts("");
    puts("file_extension must include period; example: .cpp");
+   puts("NOTE: do *not* include wildcards in target_file_extension !!");
 }
 
 //**********************************************************************************
@@ -501,3 +506,11 @@ int main(int argc, char **argv)
    return 0;
 }
 
+//***********************************************************************
+//  This is the function which actually does the work in the application
+//***********************************************************************
+static void execute_file_operation(char *full_path, char *filename)
+{
+   printf("%s%s\n", full_path, filename);
+}  //lint !e818
+      
