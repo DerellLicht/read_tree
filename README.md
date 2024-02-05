@@ -10,6 +10,7 @@ on each discovered file.
 The program now supports build-time options to act on folder specs or filtered file specs.
 These options are selected via options in the Makefile:
 
+```
 # program-operation flags
 # these flags determine whether the resulting program will operate
 # on each FILE located, using the command-line extention selection,
@@ -17,7 +18,7 @@ These options are selected via options in the Makefile:
 # It is expected that only one of these two options will be enabled.
 # Selecting both, will give ambiguous results...
 # Selecting neither, just won't give any results at all.
-```
+
 USE_FILES = YES
 USE_FOLDERS = NO
 ```
