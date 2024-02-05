@@ -7,6 +7,21 @@ then performing some task on them.  The print statement at the end
 can be replaced with a function call to perform the desired operation
 on each discovered file.
 
+The program now supports build-time options to act on folder specs or filtered file specs.
+These options are selected via options in the Makefile:
+
+# program-operation flags
+# these flags determine whether the resulting program will operate
+# on each FILE located, using the command-line extention selection,
+# or if it will operate on each FOLDER selected, and ignore filenames.
+# It is expected that only one of these two options will be enabled.
+# Selecting both, will give ambiguous results...
+# Selecting neither, just won't give any results at all.
+```
+USE_FILES = YES
+USE_FOLDERS = NO
+```
+
 ****************************************************************************************
 This project is licensed under Creative Commons CC0 1.0 Universal;  
 https://creativecommons.org/publicdomain/zero/1.0/

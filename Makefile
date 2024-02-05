@@ -3,6 +3,16 @@ SHELL=cmd.exe
 USE_DEBUG = NO
 USE_64BIT = NO
 
+# program-operation flags
+# these flags determine whether the resulting program will operate
+# on each FILE located, using the command-line extention selection,
+# or if it will operate on each FOLDER selected, and ignore filenames.
+# It is expected that only one of these two options will be enabled.
+# Selecting both, will give ambiguous results...
+# Selecting neither, just won't give any results at all.
+USE_FILES = YES
+USE_FOLDERS = NO
+
 ifeq ($(USE_64BIT),YES)
 TOOLS=d:\tdm64\bin
 else
@@ -23,6 +33,12 @@ CFLAGS += -Wno-write-strings
 ifeq ($(USE_64BIT),YES)
 CFLAGS += -DUSE_64BIT
 CxxFLAGS += -DUSE_64BIT
+endif
+ifeq ($(USE_FILES),YES)
+CFLAGS += -DOPERATE_ON_FILES
+endif
+ifeq ($(USE_FOLDERS),YES)
+CFLAGS += -DOPERATE_ON_FOLDERS
 endif
 
 LIBS=-lshlwapi

@@ -18,7 +18,8 @@
 #include "common.h"
 #include "qualify.h"
 
-//  #define  SHOW_FOLDER_NAMES    
+// #define  OPERATE_ON_FILES
+// #define  OPERATE_ON_FOLDERS
 
 //lint -esym(534, FindClose)  // Ignoring return value of function
 //lint -esym(534, __builtin_va_start, vsprintf)
@@ -53,10 +54,21 @@ unsigned level;
 static char dir_full_path[PATH_MAX];
 static uint dir_fpath_len = 0 ;
 
+#ifdef  OPERATE_ON_FILES
 //***********************************************************************
-//  This is the function which actually does the work in the application
+//  This is the function which operates on each selected file,
+//  if file operations are selected
 //***********************************************************************
 static void execute_file_operation(char *full_path, char *filename);
+#endif
+
+#ifdef  OPERATE_ON_FOLDERS
+//***********************************************************************
+//  This is the function which operates on each scanned folder,
+//  if folder operations are selected
+//***********************************************************************
+static void operate_on_folder (char const * const frmstr, char const * const folder_name);
+#endif
 
 //**********************************************************
 //  directory structure for directory_tree routines
@@ -348,6 +360,7 @@ static int build_dir_tree (char *tpath)
 }  //lint !e818
 
 //**********************************************************
+#ifdef  OPERATE_ON_FILES
 static void display_file_list(char *full_path, ffdata_p ftop)
 {
    //  now, do something with the files that you found   
@@ -356,24 +369,27 @@ static void display_file_list(char *full_path, ffdata_p ftop)
    }
    puts("");
 }
+#endif   
 
 //**********************************************************
 //lint -esym(715, frmstr)
 //lint -esym(818, frmstr)
 static void display_tree_filename (char const * const frmstr, dirs const * const ktemp)
 {
-#ifdef SHOW_FOLDER_NAMES
+#ifdef  OPERATE_ON_FOLDERS
    //  display folder list
    if (ktemp->fpath != NULL) {
-      printf("%s[%s]\n", frmstr, ktemp->fpath) ;
+      operate_on_folder (frmstr, ktemp->fpath) ;
    }
 #endif   
 
+#ifdef  OPERATE_ON_FILES
    //  display file list
    if (ktemp->ftop != NULL) {
       display_file_list(ktemp->fpath, ktemp->ftop);
    }
-}
+#endif   
+}  //lint !e715  ktemp not referenced (in some cases)
 
 //**********************************************************
 //  recursive routine to display directory tree
@@ -410,7 +426,7 @@ static void display_dir_tree (dirs * ktop)
       //*****************************************************************
       //                display data for this level                      
       //*****************************************************************
-      display_tree_filename (formstr, ktemp);
+      display_tree_filename (formstr, ktemp);   //lint !e522
 
       //  build tree string for deeper levels
       if (level > 0) {
@@ -506,11 +522,24 @@ int main(int argc, char **argv)
    return 0;
 }
 
+#ifdef  OPERATE_ON_FILES
 //***********************************************************************
-//  This is the function which actually does the work in the application
+//  This is the function which operates on each selected file,
+//  if file operations are selected
 //***********************************************************************
 static void execute_file_operation(char *full_path, char *filename)
 {
    printf("%s%s\n", full_path, filename);
 }  //lint !e818
-      
+#endif      
+
+#ifdef  OPERATE_ON_FOLDERS
+//***********************************************************************
+//  This is the function which operates on each scanned folder,
+//  if folder operations are selected
+//***********************************************************************
+static void operate_on_folder (char const * const frmstr, char const * const folder_name)
+{
+   printf("%s[%s]\n", frmstr, folder_name) ;
+}
+#endif
