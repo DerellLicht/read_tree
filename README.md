@@ -8,7 +8,7 @@ can be replaced with a function call to perform the desired operation
 on each discovered file.
 
 The program now supports build-time options to act on folder specs or filtered file specs.
-These options are selected via options in the Makefile:
+These options are selected via constants in the Makefile:
 
 ```
 # program-operation flags
