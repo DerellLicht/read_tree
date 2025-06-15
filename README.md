@@ -1,28 +1,8 @@
 # read_tree - generic utility for searching folder tree for files
 This will be a generic utility to recursively search through all folders
-below specified target folder, and locate all files meeting the
-specified file extension.
-This is intended as a template for reading all files in current folder tree,
-then performing some task on them.  The print statement at the end
-can be replaced with a function call to perform the desired operation
-on each discovered file.
+below specified target folder, and displaying the tree structure.
 
-The program now supports build-time options to act on folder specs or filtered file specs.  
-These options are selected via constants in the Makefile:
-
-```
-# program-operation flags
-# these flags determine whether the resulting program will operate
-# on each FILE located, using the command-line extention selection,
-# or if it will operate on each FOLDER selected, and ignore filenames.
-# It is expected that only one of these two options will be enabled.
-# Selecting both, will give ambiguous results...
-# Selecting neither, just won't give any results at all.
-
-USE_FILES = YES
-USE_FOLDERS = NO
-```
-
+As of June 2025, this program supports Unicode filenames for input and output
 ****************************************************************************************
 This project is licensed under Creative Commons CC0 1.0 Universal;  
 https://creativecommons.org/publicdomain/zero/1.0/

@@ -177,7 +177,7 @@ debug_dump(dirpath, L"FindFirstFile denied") ;
       }
       else {
 #ifdef  DESPERATE
-syslog(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
+console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
 #endif
          // _stprintf (tempstr, "path [%s]\n", dirpath);
          // nputs (0xA, tempstr);
@@ -265,7 +265,7 @@ debug_dump(fdata.cFileName, L"denied") ;
          }
          else if (err == ERROR_NO_MORE_FILES) {
 #ifdef  DESPERATE
-syslog(L"FindNextFileW: no more files\n") ;
+console->dputsf(L"FindNextFileW: no more files\n") ;
 #endif
             done = true ;
          }
@@ -339,9 +339,6 @@ static int build_dir_tree (wchar_t *tpath)
    //  derive root path name
    if (wcslen (base_path) == 3) {
       top->name = (TCHAR *) new TCHAR[8] ;
-      // top->name = (TCHAR *) malloc(8 * sizeof(TCHAR)) ;
-      // if (top->name == 0)
-      //    error_exit (OUT_OF_MEMORY, NULL);
       wcscpy (top->name, L"<root>");
    }
    else {
@@ -351,9 +348,6 @@ static int build_dir_tree (wchar_t *tpath)
       strptr++;                 //  skip past backslash, to filename
 
       top->name = (TCHAR *) new TCHAR[wcslen (strptr) + 1];
-      // top->name = (TCHAR *) malloc((wcslen (strptr) + 1) * sizeof(TCHAR));
-      // if (top->name == 0)
-      //    error_exit (OUT_OF_MEMORY, NULL);
       wcscpy (top->name, strptr);
    }
 
@@ -376,20 +370,6 @@ debug_dump(L"exit", L"returned from read_dir_tree") ;
 //**********************************************************
 static void display_tree_filename (wchar_t *lformstr, dirs *ktemp)
 {
-   // wchar_t levelstr[MAX_PATH_LEN];
-   // sprintf (levelstr, "%s%s", frmstr, ktemp->name);
-//    int wlen = wcslen(ktemp->name);
-//    //  why is mb_len == 0 on base folder??
-//    if (ktemp->mb_len == 0) {
-//       //  this won't work for Unicode targets
-//       ktemp->mb_len = wlen ;
-//    }
-//    uint slen = ktemp->mb_len;
-   
-   //  calculate required padding spaces
-   // int frmlen = wcslen(frmstr);
-   // uint splen = 0 ;
-
    console->dputsf(L"%s %s\n", lformstr, ktemp->name) ;
 }
 
@@ -424,40 +404,6 @@ static void display_dir_tree (dirs * ktop)
       //                display data for this level                      
       //*****************************************************************
       display_tree_filename (formstr, ktemp);
-         //  show file/directory sizes only
-          //   if (ktemp->dirsize != ktemp->subdirsize ||   //lint !e777
-          //      ktemp->dirsecsize != ktemp->subdirsecsize) {   //lint !e777
-          //      // dsize.convert  (ktemp->dirsize);
-          //      // dssize.convert (ktemp->dirsecsize);
-          //      // sdsize.convert (ktemp->subdirsize);
-          // 
-          //      //  now, print the normal directory
-          //      // sprintf (tempstr, "%11s", dsize.putstr ());
-          //      // nputs (dtree_colors[level], tempstr);
-          // 
-          //      // sprintf(tempstr, "%11s %14s", dssize_ptr, sdsize_ptr) ;
-          //      // sprintf (tempstr, "%11s %14s", dssize.putstr (),
-          //      //   sdsize.putstr ());
-          //      // nputs (dtree_colors[level], tempstr);
-          //      printf("%I64u, %I64u, %I64u ", ktemp->dirsize, ktemp->dirsecsize, ktemp->subdirsize) ;
-          //   }
-          // 
-          //   /*  no subdirectories are under this one  */
-          //   else {
-          //      //  now, print the normal directory
-          //      // sprintf(tempstr, "            %14s", sdsize_ptr) ;
-          //      // sdsize.convert (ktemp->subdirsize);
-          //      // sprintf (tempstr, "%14s", sdsize.putstr ());
-          //      // nputs (dtree_colors[level], tempstr);
-          //      printf("%I64u ", ktemp->subdirsize) ;
-          //   }                   /* end  else !(ktemp->nsdi) */
-          // 
-          //   // sprintf(tempstr, "%14s", sdssize_ptr) ;
-          //   // sdssize.convert (ktemp->subdirsecsize);
-          //   // sprintf (tempstr, "%14s", sdssize.putstr ());
-          //   // nputs (dtree_colors[level], tempstr);
-          //   printf("%I64u ", ktemp->subdirsecsize) ;
-          //   puts("");
 
       //  build tree string for deeper levels
       if (level > 0) {
@@ -469,9 +415,7 @@ static void display_dir_tree (dirs * ktop)
 
       //  process any sons
       level++;
-      // if (level <= tree_level_limit) {
-         display_dir_tree(ktemp->sons);
-      // }
+      display_dir_tree(ktemp->sons);
       formstr[--level] = (wchar_t) 0;  //  NOLINT
 
       //  goto next brother
@@ -566,6 +510,7 @@ int wmain(int argc, wchar_t *argv[])
       return 1 ;
    }
 
+   //  show the tree that we read
    display_dir_tree(top);
    return 0;
 }
