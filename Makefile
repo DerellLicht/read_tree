@@ -1,88 +1,95 @@
-# makefile for media_list app
-SHELL=cmd.exe
+# SHELL=cmd.exe
 USE_DEBUG = NO
 USE_64BIT = NO
-
-# program-operation flags
-# these flags determine whether the resulting program will operate
-# on each FILE located, using the command-line extention selection,
-# or if it will operate on each FOLDER selected, and ignore filenames.
-# It is expected that only one of these two options will be enabled.
-# Selecting both, will give ambiguous results...
-# Selecting neither, just won't give any results at all.
-USE_FILES = YES
-USE_FOLDERS = NO
+USE_UNICODE = YES
 
 ifeq ($(USE_64BIT),YES)
 TOOLS=d:\tdm64\bin
 else
-TOOLS=c:\mingw\bin
+TOOLS=d:\tdm32\bin
 endif
 
 ifeq ($(USE_DEBUG),YES)
 CFLAGS = -Wall -g -c
-CxxFLAGS = -Wall -g -c
 LFLAGS = -g
 else
 CFLAGS = -Wall -s -O3 -c
-CxxFLAGS = -Wall -s -O3 -c
 LFLAGS = -s -O3
 endif
 CFLAGS += -Weffc++
 CFLAGS += -Wno-write-strings
 ifeq ($(USE_64BIT),YES)
 CFLAGS += -DUSE_64BIT
-CxxFLAGS += -DUSE_64BIT
 endif
-ifeq ($(USE_FILES),YES)
-CFLAGS += -DOPERATE_ON_FILES
+CFLAGS += -Ider_libs
+IFLAGS += -Ider_libs
+LiFLAGS += -Ider_libs
+
+ifeq ($(USE_UNICODE),YES)
+CFLAGS += -DUNICODE -D_UNICODE
+LiFLAGS += -dUNICODE -d_UNICODE
+LFLAGS += -dUNICODE -d_UNICODE
 endif
-ifeq ($(USE_FOLDERS),YES)
-CFLAGS += -DOPERATE_ON_FOLDERS
+
+CPPSRC=read_tree.cpp \
+der_libs\common_funcs.cpp \
+der_libs\conio_min.cpp \
+der_libs\qualify.cpp
+
+OBJS = $(CPPSRC:.cpp=.o)
+
+BIN=read_tree
+
+ifeq ($(USE_64BIT),NO)
+BINX = $(BIN).exe
+else
+BINX = $(BIN)64.exe
 endif
 
 LIBS=-lshlwapi
 
-CPPSRC=read_tree.cpp common.cpp qualify.cpp
-
-OBJS = $(CSRC:.c=.o) $(CPPSRC:.cpp=.o)
+#  clang-tidy options
+CHFLAGS = -header-filter=.*
+CHTAIL = --
+CHTAIL += -Ider_libs
+ifeq ($(USE_64BIT),YES)
+CHTAIL += -DUSE_64BIT
+endif
+ifeq ($(USE_UNICODE),YES)
+CHTAIL += -DUNICODE -D_UNICODE
+endif
 
 #**************************************************************************
 %.o: %.cpp
-	$(TOOLS)\g++ $(CFLAGS) $<
+	$(TOOLS)/g++ $(CFLAGS) -c $< -o $@
 
-%.o: %.cxx
-	$(TOOLS)\g++ $(CxxFLAGS) $<
-
-ifeq ($(USE_64BIT),NO)
-BIN = read_tree.exe
-else
-BIN = read_tree64.exe
-endif
-
-all: $(BIN)
+all: $(BINX)
 
 clean:
-	rm -f *.o *.exe *~ *.zip
+	rm -f $(OBJS) *.exe *~ *.zip
 
 dist:
-	rm -f read_files.zip
-	zip read_tree.zip $(BIN) Readme.md
+	rm -f $(BIN).zip
+	zip $(BIN).zip $(BIN) Readme.md
 
 wc:
-	wc -l *.cpp
+	wc -l $(CPPSRC)
+
+check:
+	cmd /C "d:\clang\bin\clang-tidy.exe $(CHFLAGS) $(CPPSRC) $(CHTAIL)"
 
 lint:
-	cmd /C "c:\lint9\lint-nt +v -width(160,4) $(LiFLAGS) -ic:\lint9 mingw.lnt -os(_lint.tmp) $(CPPSRC)"
+	cmd /C "c:\lint9\lint-nt +v -width(160,4) $(LiFLAGS) -ic:\lint9 mingw.lnt -os(_lint.tmp) lintdefs.cpp $(CPPSRC)"
 
 depend: 
-	makedepend $(CSRC) $(CPPSRC)
+	makedepend $(IFLAGS) $(CPPSRC)
 
-$(BIN): $(OBJS)
-	$(TOOLS)\g++ $(OBJS) $(LFLAGS) -o $(BIN) $(LIBS) 
+$(BINX): $(OBJS)
+	$(TOOLS)\g++ $(OBJS) $(LFLAGS) -o $(BINX) $(LIBS) 
 
 # DO NOT DELETE
 
-read_tree.o: common.h qualify.h
-common.o: common.h
-qualify.o: qualify.h
+read_tree.o: der_libs/common.h der_libs/conio_min.h der_libs/qualify.h
+der_libs\common_funcs.o: der_libs/common.h
+der_libs\conio_min.o: der_libs/common.h der_libs/conio_min.h
+der_libs\qualify.o: der_libs/qualify.h
