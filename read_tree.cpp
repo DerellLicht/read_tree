@@ -387,7 +387,7 @@ static void display_dir_tree (dirs * ktop)
    while (ktemp != NULL) {
       //  first, build tree list for current level
       if (level == 0) {
-         formstr[0] = (wchar_t) NULL;
+         formstr[0] = (wchar_t) 0;
       }
       else {
          if (ktemp->brothers == (struct dirs *) NULL) {
@@ -415,7 +415,7 @@ static void display_dir_tree (dirs * ktop)
 
       //  process any sons
       level++;
-      display_dir_tree(ktemp->sons);
+         display_dir_tree(ktemp->sons);
       formstr[--level] = (wchar_t) 0;  //  NOLINT
 
       //  goto next brother
