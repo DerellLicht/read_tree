@@ -59,7 +59,8 @@ struct dirs
 {
    dirs *brothers {nullptr};
    dirs *sons{nullptr};
-   wchar_t *name{nullptr};
+   // wchar_t *name{nullptr};
+   std::wstring name {};
    uchar attrib{};
    ULONGLONG dirsize{};
    ULONGLONG dirsecsize{};
@@ -85,6 +86,24 @@ void debug_dump(wchar_t *fname, wchar_t *msg)
    console->dputsf(L"l%u %s: %s\n", level, fname, msg) ;  //  debug dump
 }
 #endif
+
+//*********************************************************
+//  "waiting" pattern generator
+//*********************************************************
+static void pattern_update(bool do_init)
+{
+   static unsigned dircount = 0 ;
+   if (do_init) {
+      console->dputsf(L"pattern init: prev dircount: %u\n", dircount) ;
+      dircount = 0 ;
+   }
+   else {
+      dircount++ ;
+      if ((dircount % 100) == 0) {
+         console->dputsf(L"\rL%u %u", level, dircount) ;
+      }
+   }
+}
 
 //**********************************************************
 //  allocate struct for dir listing                         
@@ -120,24 +139,9 @@ static int read_dir_tree (dirs * cur_node)
    uint slen ;
    bool done ;  //, result;
    DWORD err;
-   // ULONGLONG file_clusters, clusters;
-   // WIN32_FIND_DATA fdata ; //  long-filename file struct
    WIN32_FIND_DATA fdata ; //  long-filename file struct
 
-   // if (((dircount % 50) == 0)  &&  _kbhit()) {
-   //    result = _getch() ;
-   //    //  check for ESCAPE character
-   //    if (result == 27) {
-   //       // error_exit(DATA_OKAY, NULL) ;
-   //       early_abort = 1 ;
-   //    }
-   // }
-   // //  if early_abort flag gets set, return with "success" flag,
-   // //  but without reading anything further...
-   // if (early_abort) 
-   //    return 0;
-
-   // pattern_update() ;
+   pattern_update(false) ;
    //  Insert next subtree level.
    //  if level == 0, this is first call, and
    //  dirpath is already complete
@@ -147,7 +151,7 @@ static int read_dir_tree (dirs * cur_node)
       strptr++;
       *strptr = 0;
       slen = wcslen (dirpath);
-      wcscat (dirpath, cur_node->name);
+      wcscat (dirpath, cur_node->name.c_str());
       wcscat (dirpath, L"\\*");
    }
    else {
@@ -219,8 +223,9 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
                
                //  convert Unicode filenames to UTF8
                dtemp->mb_len = wcslen(fdata.cFileName) ;
-               dtemp->name = (TCHAR *) new TCHAR[dtemp->mb_len + 1] ;  //lint !e737
-               wcscpy (dtemp->name, (TCHAR *) fdata.cFileName);  //  NOLINT
+               // dtemp->name = (TCHAR *) new TCHAR[dtemp->mb_len + 1] ;  //lint !e737
+               // wcscpy (dtemp->name, (TCHAR *) fdata.cFileName);  //  NOLINT
+               dtemp->name = fdata.cFileName ;
 
                dtemp->attrib = (uchar) fdata.dwFileAttributes;
                // dtail->directs++ ;
@@ -316,30 +321,14 @@ static int build_dir_tree (wchar_t *tpath)
    TCHAR *strptr;
    level = 0;
 
-   //  Extract base path from first filespec,
-   //  and strip off filename
-   wcscpy (base_path, tpath);
-   strptr = wcsrchr (base_path, L'\\');
-   if (strptr != 0)
-      *(++strptr) = 0;          //  strip off filename
-
-   // get_disk_info (base_path);
-
    //  allocate struct for dir listing
    top = new_dir_node ();
 
-   //  Extract base path from first filespec,
-   //  and strip off filename
-   wcscpy (base_path, tpath);
-   strptr = wcsrchr (base_path, L'\\');
-   strptr++;                    //  skip past backslash, to filename
-   *strptr = 0;                 //  strip off filename
-   base_len = wcslen (base_path);
-
    //  derive root path name
    if (wcslen (base_path) == 3) {
-      top->name = (TCHAR *) new TCHAR[8] ;
-      wcscpy (top->name, L"<root>");
+      // top->name = (TCHAR *) new TCHAR[8] ;
+      // wcscpy (top->name, L"<root>");
+      top->name = L"<root>";
    }
    else {
       wcscpy (tempstr, base_path);
@@ -347,22 +336,23 @@ static int build_dir_tree (wchar_t *tpath)
       strptr = wcsrchr (tempstr, L'\\');
       strptr++;                 //  skip past backslash, to filename
 
-      top->name = (TCHAR *) new TCHAR[wcslen (strptr) + 1];
-      wcscpy (top->name, strptr);
+      // top->name = (TCHAR *) new TCHAR[wcslen (strptr) + 1];
+      // wcscpy (top->name, strptr);
+      top->name = strptr ;
    }
-
-   // top->attrib = 0 ;   //  top-level dir is always displayed
-
    wcscpy (dirpath, tpath);
 
    // pattern_init(_T("wait; reading directory ")) ;
+   pattern_update(true);
    // int result = 
    read_dir_tree (top);
+   pattern_update(true);
+   
 #ifdef  DESPERATE
 debug_dump(L"exit", L"returned from read_dir_tree") ;
 #endif
    // pattern_reset() ;
-   return 0;
+   return 0;  //lint !e438
 }
 
 //**********************************************************
@@ -370,7 +360,7 @@ debug_dump(L"exit", L"returned from read_dir_tree") ;
 //**********************************************************
 static void display_tree_filename (wchar_t *lformstr, dirs *ktemp)
 {
-   console->dputsf(L"%s %s\n", lformstr, ktemp->name) ;
+   console->dputsf(L"%s %s\n", lformstr, ktemp->name.c_str()) ;
 }
 
 //**********************************************************
@@ -502,7 +492,7 @@ int wmain(int argc, wchar_t *argv[])
       *strptr = 0 ;  //  strip off filename
    }
    base_len = wcslen(base_path) ;
-   // printf("base path: %s\n", base_path);
+   // console->dputsf(L"base path 1 [%u]: %s\n", base_len, base_path);
    
    result = build_dir_tree(file_spec) ;
    if (result < 0) {
