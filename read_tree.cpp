@@ -70,8 +70,6 @@ struct dirs
    unsigned directs{};
    unsigned subfiles{};
    unsigned subdirects{};
-   bool     is_multi_byte {};
-   uint     mb_len {};
 };
 
 dirs *top = NULL;
@@ -106,29 +104,6 @@ static void pattern_update(bool do_init)
 }
 
 //**********************************************************
-//  allocate struct for dir listing                         
-//  NOTE:  It is assumed that the caller will               
-//         initialize the name[], ext[], attrib fields!!    
-//**********************************************************
-static dirs *new_dir_node (void)
-{
-   //  switching this statement from malloc() to new()
-   //  changes total exe size from 70,144 to 179,200 !!!
-   //   70144 ->     32256   45.99%    win64/pe     ndir64.exe
-   // dirs *dtemp = (dirs *) malloc(sizeof(dirs)) ;
-   // if (dtemp == NULL) {
-   //    return NULL ;
-   // }
-   //     179200 ->     72704   40.57%    win64/pe     ndir64.exe
-   dirs *dtemp = new dirs ;
-   ZeroMemory(dtemp, sizeof (struct dirs));  //lint !e668
-   // memset ((wchar_t *) dtemp, 0, sizeof (struct dirs));  //lint !e668
-   // dtemp->dirsecsize = clbytes;
-   // dtemp->subdirsecsize = clbytes;
-   return dtemp;
-}
-
-//**********************************************************
 //  recursive routine to read directory tree
 //**********************************************************
 static int read_dir_tree (dirs * cur_node)
@@ -138,7 +113,6 @@ static int read_dir_tree (dirs * cur_node)
    HANDLE handle;
    uint slen ;
    bool done ;  //, result;
-   DWORD err;
    WIN32_FIND_DATA fdata ; //  long-filename file struct
 
    pattern_update(false) ;
@@ -169,7 +143,7 @@ static int read_dir_tree (dirs * cur_node)
 #ifdef  DESPERATE
 debug_dump(dirpath, L"entry") ;
 #endif
-   err = 0;
+   DWORD err = 0;
    handle = FindFirstFile(dirpath, &fdata);
    if (handle == INVALID_HANDLE_VALUE) {
       err = GetLastError ();
@@ -183,10 +157,6 @@ debug_dump(dirpath, L"FindFirstFile denied") ;
 #ifdef  DESPERATE
 console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
 #endif
-         // _stprintf (tempstr, "path [%s]\n", dirpath);
-         // nputs (0xA, tempstr);
-         // _stprintf (tempstr, "FindFirst: %s\n", get_system_message ());
-         // nputs (0xA, tempstr);
          return (int) err ;
       }
    }
@@ -194,7 +164,7 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
    //  loop on find_next
    done = false;
    while (!done) {
-      if (!err) {
+      if (err == 0) {
          //  we found a directory
          if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             bool cut_dot_dirs;
@@ -212,19 +182,15 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
                cur_node->directs++;
                cur_node->subdirects++;
 
-               dirs *dtemp = new_dir_node ();
+               // dirs *dtemp = new_dir_node ();
+               dirs *dtemp = new dirs ;
                if (cur_node->sons == NULL)
                   cur_node->sons = dtemp;
                else
                   dtail->brothers = dtemp;   //lint !e613  NOLINT
                dtail = dtemp;
-               // if (!n.ucase) 
-               //    strlwr(ff.name) ;
                
                //  convert Unicode filenames to UTF8
-               dtemp->mb_len = wcslen(fdata.cFileName) ;
-               // dtemp->name = (TCHAR *) new TCHAR[dtemp->mb_len + 1] ;  //lint !e737
-               // wcscpy (dtemp->name, (TCHAR *) fdata.cFileName);  //  NOLINT
                dtemp->name = fdata.cFileName ;
 
                dtemp->attrib = (uchar) fdata.dwFileAttributes;
@@ -265,7 +231,7 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
 #ifdef  DESPERATE
 debug_dump(fdata.cFileName, L"denied") ;
 #else
-            ;                     //  continue reading
+            ;  //  continue reading
 #endif
          }
          else if (err == ERROR_NO_MORE_FILES) {
@@ -317,29 +283,23 @@ debug_dump(ktemp->name, L"call read_dir_tree") ;
 //**********************************************************
 static int build_dir_tree (wchar_t *tpath)
 {
-   // int result ;
-   TCHAR *strptr;
    level = 0;
 
    //  allocate struct for dir listing
-   top = new_dir_node ();
+   // top = new_dir_node ();
+   top = new dirs ;
 
    //  derive root path name
    if (wcslen (base_path) == 3) {
-      // top->name = (TCHAR *) new TCHAR[8] ;
-      // wcscpy (top->name, L"<root>");
       top->name = L"<root>";
    }
    else {
       wcscpy (tempstr, base_path);
       tempstr[base_len - 1] = 0; //  strip off tailing backslash
-      strptr = wcsrchr (tempstr, L'\\');
+      wchar_t *strptr = wcsrchr (tempstr, L'\\');
       strptr++;                 //  skip past backslash, to filename
-
-      // top->name = (TCHAR *) new TCHAR[wcslen (strptr) + 1];
-      // wcscpy (top->name, strptr);
       top->name = strptr ;
-   }
+   }  //lint !e438
    wcscpy (dirpath, tpath);
 
    // pattern_init(_T("wait; reading directory ")) ;
@@ -352,7 +312,7 @@ static int build_dir_tree (wchar_t *tpath)
 debug_dump(L"exit", L"returned from read_dir_tree") ;
 #endif
    // pattern_reset() ;
-   return 0;  //lint !e438
+   return 0;
 }
 
 //**********************************************************
