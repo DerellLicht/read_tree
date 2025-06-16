@@ -414,7 +414,8 @@ int main()
 #endif //defined(__GNUC__) && defined(_UNICODE)
 
 //**********************************************************************************
-wchar_t file_spec[MAX_PATH_LEN+1] = L"" ;
+// wchar_t file_spec[MAX_PATH_LEN+1] = L"" ;
+static std::wstring file_spec(L"");
 
 // int main(int argc, wchar_t **argv)
 int wmain(int argc, wchar_t *argv[])
@@ -426,26 +427,20 @@ int wmain(int argc, wchar_t *argv[])
    }
    int idx, result ;
    for (idx=1; idx<argc; idx++) {
-      wchar_t *p = argv[idx] ;
-      wcsncpy(file_spec, p, MAX_PATH_LEN);
-      file_spec[MAX_PATH_LEN] = 0 ;
+      file_spec = argv[idx] ;
    }
 
-   if (file_spec[0] == 0) {
-      wcscpy(file_spec, L".");
-   }
-
-   uint qresult = qualify(file_spec) ;
+   unsigned qresult = qualify(file_spec) ;   //lint !e732
    if (qresult == QUAL_INV_DRIVE) {
-      console->dputsf(L"%s: 0x%X\n", file_spec, qresult);
+      console->dputsf(L"%s: 0x%X\n", file_spec.c_str(), qresult);
       return 1 ;
    }
-   console->dputsf(L"input file spec: %s\n", file_spec);
+   console->dputsf(L"input file spec: %s\n", file_spec.c_str());
 
    //  Extract base path from first filespec, and strip off filename.
    //  base_path becomes useful when one wishes to perform
    //  multiple searches in one path.
-   wcscpy(base_path, file_spec) ;
+   wcscpy(base_path, file_spec.c_str()) ;
    wchar_t *strptr = wcsrchr(base_path, '\\') ;
    if (strptr != 0) {
        strptr++ ;  //lint !e613  skip past backslash, to filename
@@ -454,9 +449,9 @@ int wmain(int argc, wchar_t *argv[])
    base_len = wcslen(base_path) ;
    // console->dputsf(L"base path 1 [%u]: %s\n", base_len, base_path);
    
-   result = build_dir_tree(file_spec) ;
+   result = build_dir_tree((wchar_t *)file_spec.c_str()) ;
    if (result < 0) {
-      console->dputsf(L"build_dir_tree: %s, %s\n", file_spec, strerror(-result));
+      console->dputsf(L"build_dir_tree: %s, %s\n", file_spec.c_str(), strerror(-result));
       return 1 ;
    }
 

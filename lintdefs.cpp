@@ -5,9 +5,10 @@
 //lint -e1066  Symbol 'conio_min::hStdOutPublic' declared as "C" conflicts ...
 //lint -e1776  Converting a string literal is not const safe (initialization)
 
+//lint -esym(14,  __created)   Symbol not referenced
+//lint -esym(401, __created)   Symbol not referenced
 //lint -esym(528, __created)   Symbol not referenced
 //lint -esym(843, __created)   Variable could be declared as const
-//lint -e559   Size of argument no. 2 inconsistent with format
 
 //  warnings/errors caused by PcLint not supporting STL, or C++11 standard
 //lint -e19    Useless Declaration
@@ -36,6 +37,7 @@
 //lint -e522   Highest operation, operator '!=', lacks side-effects
 //lint -e526   Symbol not defined
 //lint -e550   Symbol not accessed
+//lint -e559   Size of argument no. 2 inconsistent with format
 //lint -e628   no argument information provided for function 
 //lint -e746   call to function not made in the presence of a prototype
 //lint -e808   No explicit type given symbol 'file', int assumed
