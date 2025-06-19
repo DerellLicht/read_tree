@@ -31,6 +31,8 @@ LiFLAGS += -dUNICODE -d_UNICODE
 LFLAGS += -dUNICODE -d_UNICODE
 endif
 
+LINTFILES=lintdefs.cpp lintdefs.ref.h 
+
 # This is required for *some* versions of makedepend
 IFLAGS += -DNOMAKEDEPEND
 
@@ -82,7 +84,7 @@ check:
 	cmd /C "d:\clang\bin\clang-tidy.exe $(CHFLAGS) $(CPPSRC) $(CHTAIL)"
 
 lint:
-	cmd /C "c:\lint9\lint-nt +v -width(160,4) $(LiFLAGS) -ic:\lint9 mingw.lnt -os(_lint.tmp) lintdefs.cpp $(CPPSRC)"
+	cmd /C "c:\lint9\lint-nt +v -width(160,4) $(LiFLAGS) -ic:\lint9 mingw.lnt -os(_lint.tmp) $(LINTFILES) $(CPPSRC)"
 
 depend: 
 	makedepend $(IFLAGS) $(CPPSRC)
