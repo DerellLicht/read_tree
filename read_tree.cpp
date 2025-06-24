@@ -365,7 +365,7 @@ static void display_dir_tree (dirs * ktop)
 
       //  process any sons
       level++;
-         display_dir_tree(ktemp->sons);
+      display_dir_tree(ktemp->sons);
       formstr[--level] = (wchar_t) 0;  //  NOLINT
 
       //  goto next brother
