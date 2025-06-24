@@ -55,11 +55,17 @@ unsigned level;
 //**********************************************************
 //  directory structure for directory_tree routines
 //**********************************************************
+#define  USE_VECTOR
+
 struct dirs
 {
+#ifdef  USE_VECTOR
+   std::vector<dirs> brothers {};
+   std::vector<dirs> sons {};
+#else   
    dirs *brothers {nullptr};
    dirs *sons{nullptr};
-   // wchar_t *name{nullptr};
+#endif   
    std::wstring name {};
    uchar attrib{};
    ULONGLONG dirsize{};
@@ -72,7 +78,11 @@ struct dirs
    unsigned subdirects{};
 };
 
+#ifdef  USE_VECTOR
+std::vector<dirs> dlist {};
+#else
 dirs *top = NULL;
+#endif
 
 //*****************************************************************
 //  this was used for debugging directory-tree read and build
