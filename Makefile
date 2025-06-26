@@ -2,6 +2,7 @@
 USE_DEBUG = NO
 USE_64BIT = NO
 USE_UNICODE = YES
+USE_VECTOR = YES
 
 ifeq ($(USE_64BIT),YES)
 TOOLS=d:\tdm64\bin
@@ -21,6 +22,11 @@ CFLAGS += -Wno-write-strings
 ifeq ($(USE_64BIT),YES)
 CFLAGS += -DUSE_64BIT
 endif
+
+ifeq ($(USE_VECTOR),YES)
+CFLAGS += -DUSE_VECTOR
+endif
+
 CFLAGS += -Ider_libs
 IFLAGS += -Ider_libs
 LiFLAGS += -Ider_libs

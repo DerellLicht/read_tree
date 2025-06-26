@@ -12,6 +12,9 @@
 
 #include <windows.h>
 #include <stdio.h>
+#ifdef  USE_VECTOR
+#include <vector>
+#endif
 #include <string>
 #include <memory> //  unique_ptr
 
@@ -55,8 +58,6 @@ unsigned level;
 //**********************************************************
 //  directory structure for directory_tree routines
 //**********************************************************
-#define  USE_VECTOR
-
 struct dirs
 {
 #ifdef  USE_VECTOR
@@ -83,6 +84,14 @@ std::vector<dirs> dlist {};
 #else
 dirs *top = NULL;
 #endif
+
+//*****************************************************************
+//  NEW IDEA FOR HANDLING THESE STRUCTS:
+//  Can I just tack all sub-folders in the current folder,
+//  onto the sons list, then just pass that back to myself??
+//  Thus, we would only have one vector, possibly called sub_dirs ...
+//  
+//*****************************************************************
 
 //*****************************************************************
 //  this was used for debugging directory-tree read and build
@@ -116,9 +125,15 @@ static void pattern_update(bool do_init)
 //**********************************************************
 //  recursive routine to read directory tree
 //**********************************************************
+#ifdef  USE_VECTOR
+static int read_dir_tree (std::vector<dirs> cur_node)
+#else
 static int read_dir_tree (dirs * cur_node)
+#endif
 {
+#ifndef  USE_VECTOR
    dirs *dtail = 0;
+#endif   
    TCHAR *strptr;
    HANDLE handle;
    uint slen ;
@@ -193,12 +208,18 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
                cur_node->subdirects++;
 
                // dirs *dtemp = new_dir_node ();
+#ifdef  USE_VECTOR
+               dlist.emplace_back();
+               uint idx = dlist.size() - 1 ;
+               dirs *dtemp = &dlist[idx] ;
+#else               
                dirs *dtemp = new dirs ;
                if (cur_node->sons == NULL)
                   cur_node->sons = dtemp;
                else
                   dtail->brothers = dtemp;   //lint !e613  NOLINT
                dtail = dtemp;
+#endif               
                
                //  convert Unicode filenames to UTF8
                dtemp->name = fdata.cFileName ;
@@ -297,7 +318,13 @@ static int build_dir_tree (wchar_t *tpath)
 
    //  allocate struct for dir listing
    // top = new_dir_node ();
+#ifdef  USE_VECTOR
+   dlist.emplace_back();
+   // uint idx = dlist.size() - 1 ;
+   dirs *top = &dlist[0] ;
+#else
    top = new dirs ;
+#endif   
 
    //  derive root path name
    if (wcslen (base_path) == 3) {
