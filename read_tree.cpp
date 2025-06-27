@@ -338,6 +338,7 @@ static int build_dir_tree (wchar_t *tpath)
    // dirs *top = &temp->brothers[0] ;
 #else
    top = new dirs ;
+   dirs *temp = top ;
 #endif   
 
    //  derive root path name
@@ -390,13 +391,21 @@ static void const display_tree_filename (wchar_t *lformstr, dirs *ktemp)
 //***********************************************************************************
 static wchar_t formstr[50];
 
-// static void display_dir_tree (dirs *cur_node)
+#ifdef  USE_VECTOR
 static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
+#else
+static void display_dir_tree (dirs *cur_node)
+#endif
 {
+#ifdef  USE_VECTOR
    uint num_folders = brothers.size() ;
    if (brothers.empty()) {
       return;
    }
+#else   
+   if (cur_node == NULL)
+      return;
+#endif      
 
 #ifdef  USE_VECTOR
    // dirs *cur_node = &brothers[0] ;   
@@ -552,8 +561,12 @@ int wmain(int argc, wchar_t *argv[])
    }
 
    //  show the tree that we read
+#ifdef  USE_VECTOR
    dirs *temp = &dlist.brothers[0] ;
    display_dir_tree(dlist.brothers, (TCHAR *) temp->name.c_str());
+#else   
+   display_dir_tree(top);
+#endif   
    return 0;
 }
 
