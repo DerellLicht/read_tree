@@ -311,14 +311,6 @@ static int build_dir_tree (wchar_t *tpath)
    return 0;
 }
 
-//**********************************************************
-//  Note: lstr contains form string plus filename
-//**********************************************************
-static void const display_tree_filename (wchar_t *lformstr, dirs *ktemp)
-{
-   console->dputsf(L"%s %s\n", lformstr, ktemp->name.c_str()) ;
-}
-
 //***********************************************************************************
 //  recursive routine to display directory tree
 //  do all subroutines, then go to next.
@@ -366,7 +358,8 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
       //*****************************************************************
       //                display data for this level                      
       //*****************************************************************
-      display_tree_filename (formstr, ktemp);
+      // display_tree_filename (formstr, ktemp);
+      console->dputsf(L"%s %s\n", formstr, ktemp->name.c_str()) ;
 
       //  build tree string for deeper levels
       if (level > 0) {
