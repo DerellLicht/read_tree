@@ -31,6 +31,11 @@
 //lint -e818  variable could be declared as pointing to const
 //lint -e10   Expecting '}'
 
+//lint -esym(843, display_dir_tree, formstr)
+//lint -esym(528, display_tree_filename, formstr)
+//lint -esym(551, top)  Symbol not accessed
+//lint -esym(844, top)
+
 //  per Jason Hood, this turns off MinGW's command-line expansion, 
 //  so we can handle wildcards like we want to.                    
 //lint -e765  external '_CRT_glob' could be made static
@@ -41,8 +46,6 @@ wchar_t tempstr[MAX_PATH+1];
 
 //lint -esym(843, show_all)
 bool show_all = true ;
-
-static wchar_t formstr[50];
 
 //  name of drive+path without filenames
 static TCHAR base_path[MAX_FILE_LEN+1] ;
@@ -61,11 +64,11 @@ unsigned level;
 struct dirs
 {
 #ifdef  USE_VECTOR
+   // std::vector<dirs> son {}; // only one element needed, to hold brothers list for next level
    std::vector<dirs> brothers {};
-   std::vector<dirs> sons {};
 #else   
    dirs *brothers {nullptr};
-   dirs *sons{nullptr};
+   dirs *son{nullptr};
 #endif   
    std::wstring name {};
    uchar attrib{};
@@ -80,24 +83,16 @@ struct dirs
 };
 
 #ifdef  USE_VECTOR
-std::vector<dirs> dlist {};
+static dirs dlist {};   //  top-level brothers will be unused
 #else
-dirs *top = NULL;
+static dirs *top = NULL;
 #endif
-
-//*****************************************************************
-//  NEW IDEA FOR HANDLING THESE STRUCTS:
-//  Can I just tack all sub-folders in the current folder,
-//  onto the sons list, then just pass that back to myself??
-//  Thus, we would only have one vector, possibly called sub_dirs ...
-//  
-//*****************************************************************
 
 //*****************************************************************
 //  this was used for debugging directory-tree read and build
 //*****************************************************************
 #ifdef  DESPERATE
-void debug_dump(wchar_t *fname, wchar_t *msg)
+void debug_dump(wchar_t const * const fname, wchar_t const * const msg)
 {
    // syslog("l%u %s: %s\n", level, fname, msg) ;  //  debug dump
    console->dputsf(L"l%u %s: %s\n", level, fname, msg) ;  //  debug dump
@@ -124,12 +119,10 @@ static void pattern_update(bool do_init)
 
 //**********************************************************
 //  recursive routine to read directory tree
+//  in vector mode, cur_node points to a 'son'
+//  Build list of subdirs below this, in brothers[]
 //**********************************************************
-#ifdef  USE_VECTOR
-static int read_dir_tree (std::vector<dirs> cur_node)
-#else
-static int read_dir_tree (dirs * cur_node)
-#endif
+static int read_dir_tree (dirs *cur_node)
 {
 #ifndef  USE_VECTOR
    dirs *dtail = 0;
@@ -141,6 +134,7 @@ static int read_dir_tree (dirs * cur_node)
    WIN32_FIND_DATA fdata ; //  long-filename file struct
 
    pattern_update(false) ;
+   // console->dputsf(L"L%u: dirpath: %s, cname: %s\n", level, dirpath, cur_node->name.c_str());
    //  Insert next subtree level.
    //  if level == 0, this is first call, and
    //  dirpath is already complete
@@ -165,9 +159,9 @@ static int read_dir_tree (dirs * cur_node)
    }
 #endif   
 
-#ifdef  DESPERATE
-debug_dump(dirpath, L"entry") ;
-#endif
+// #ifdef  DESPERATE
+// debug_dump(dirpath, L"entry") ;
+// #endif
    DWORD err = 0;
    handle = FindFirstFile(dirpath, &fdata);
    if (handle == INVALID_HANDLE_VALUE) {
@@ -180,7 +174,7 @@ debug_dump(dirpath, L"FindFirstFile denied") ;
       }
       else {
 #ifdef  DESPERATE
-console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
+console->dputsf(L"%s: FindFirstFile: %s\n", dirpath, get_system_message (err));
 #endif
          return (int) err ;
       }
@@ -207,15 +201,19 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
                cur_node->directs++;
                cur_node->subdirects++;
 
-               // dirs *dtemp = new_dir_node ();
 #ifdef  USE_VECTOR
-               dlist.emplace_back();
-               uint idx = dlist.size() - 1 ;
-               dirs *dtemp = &dlist[idx] ;
+               if (cur_node == NULL) {
+                  console->dputsf(L"cur_node is NULL\n");
+                  return -1 ;
+               }
+               cur_node->brothers.emplace_back();
+               // cur_node->son[0].brothers.emplace_back();
+               uint idx = cur_node->brothers.size() - 1 ;
+               dirs *dtemp = &cur_node->brothers[idx] ;
 #else               
                dirs *dtemp = new dirs ;
-               if (cur_node->sons == NULL)
-                  cur_node->sons = dtemp;
+               if (cur_node->son == NULL)
+                  cur_node->son = dtemp;
                else
                   dtail->brothers = dtemp;   //lint !e613  NOLINT
                dtail = dtemp;
@@ -226,12 +224,16 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
 
                dtemp->attrib = (uchar) fdata.dwFileAttributes;
                // dtail->directs++ ;
+               // console->dputsf(L"%u: [%s]\n", idx, fdata.cFileName);
             }                   //  if this is not a DOT directory
+            // else {
+            //    console->dputsf(L"<%s>\n", fdata.cFileName);
+            // }
          }                      //  if this is a directory
 
          //  we found a normal file
          else {
-            // printf("%9ld %04X %s\n", fdata.file_size, fdata.attrib, fdata.fname) ;
+            // console->dputsf(L"%s\n", fdata.cFileName);
             //  convert file size
             // u64toul iconv;
             // iconv.u[0] = fdata.nFileSizeLow;
@@ -260,21 +262,20 @@ console->dputsf(L"%s: FindFindFirst: %s\n", dirpath, get_system_message (err));
          err = GetLastError ();
          if (err == ERROR_ACCESS_DENIED) {
 #ifdef  DESPERATE
-debug_dump(fdata.cFileName, L"denied") ;
+console->dputsf(L"%s: access denied\n", fdata.cFileName);
 #else
             ;  //  continue reading
 #endif
          }
          else if (err == ERROR_NO_MORE_FILES) {
-#ifdef  DESPERATE
-console->dputsf(L"FindNextFileW: no more files\n") ;
-#endif
+// #ifdef  DESPERATE
+// console->dputsf(L"FindNextFileW: no more files\n") ;
+// #endif
             done = true ;
          }
          else {
 #ifdef  DESPERATE
-wsprintf (tempstr, L"FindNext: %s\n", get_system_message (err));
-debug_dump(dirpath, tempstr) ;
+console->dputsf(L"%s: other error [%u]\n", fdata.cFileName, err);
 #endif
             done = true ;
          }
@@ -284,15 +285,22 @@ debug_dump(dirpath, tempstr) ;
    }  //  while reading files from directory
 
 #ifdef  DESPERATE
-debug_dump(dirpath, L"close") ;
+console->dputsf(L"close: %s: brothers size: %u\n", dirpath, cur_node->brothers.size());
 #endif
    FindClose (handle);
 
-   //  next, build tree lists for subsequent levels (recursive)
-   dirs *ktemp = cur_node->sons;
+   //  next, build tree lists for subsequent levels (rescursive)
+#ifdef  USE_VECTOR
+   // dirs *temp = &cur_node->son[0] ;
+   for(auto &file : cur_node->brothers) {
+      dirs *ktemp = &file;
+      // dirs *ktemp = &knode->son[0] ;
+#else
+   dirs *ktemp = cur_node->son;
    while (ktemp != NULL) {
+#endif   
 #ifdef  DESPERATE
-debug_dump(ktemp->name, L"call read_dir_tree") ;
+debug_dump(ktemp->name.c_str(), L"call read_dir_tree") ;
 #endif
       read_dir_tree (ktemp);
       cur_node->subdirsize += ktemp->subdirsize;
@@ -300,7 +308,9 @@ debug_dump(ktemp->name, L"call read_dir_tree") ;
 
       cur_node->subfiles += ktemp->subfiles;
       cur_node->subdirects += ktemp->subdirects;
+#ifndef  USE_VECTOR
       ktemp = ktemp->brothers;
+#endif      
    }
 
    //  when done, strip name from path and restore '\*.*'
@@ -319,30 +329,37 @@ static int build_dir_tree (wchar_t *tpath)
    //  allocate struct for dir listing
    // top = new_dir_node ();
 #ifdef  USE_VECTOR
-   dlist.emplace_back();
+   // dlist.son.emplace_back();
+   // dirs *temp = &dlist.son[0] ;
+   dlist.brothers.emplace_back();
+   dirs *temp = &dlist.brothers[0] ;
+   // temp->brothers.emplace_back();
    // uint idx = dlist.size() - 1 ;
-   dirs *top = &dlist[0] ;
+   // dirs *top = &temp->brothers[0] ;
 #else
    top = new dirs ;
 #endif   
 
    //  derive root path name
    if (wcslen (base_path) == 3) {
-      top->name = L"<root>";
+      temp->name = L"<root>";
    }
    else {
       wcscpy (tempstr, base_path);
       tempstr[base_len - 1] = 0; //  strip off tailing backslash
       wchar_t *strptr = wcsrchr (tempstr, L'\\');
       strptr++;                 //  skip past backslash, to filename
-      top->name = strptr ;
+      temp->name = strptr ;
    }  //lint !e438
    wcscpy (dirpath, tpath);
 
    // pattern_init(_T("wait; reading directory ")) ;
    pattern_update(true);
    // int result = 
-   read_dir_tree (top);
+#ifdef  DESPERATE
+debug_dump(temp->name.c_str(), L"call read_dir_tree") ;
+#endif
+   read_dir_tree (temp);   //  this points to a brother
    pattern_update(true);
    
 #ifdef  DESPERATE
@@ -355,29 +372,57 @@ debug_dump(L"exit", L"returned from read_dir_tree") ;
 //**********************************************************
 //  Note: lstr contains form string plus filename
 //**********************************************************
-static void display_tree_filename (wchar_t *lformstr, dirs *ktemp)
+static void const display_tree_filename (wchar_t *lformstr, dirs *ktemp)
 {
    console->dputsf(L"%s %s\n", lformstr, ktemp->name.c_str()) ;
 }
 
-//**********************************************************
+//***********************************************************************************
 //  recursive routine to display directory tree
 //  do all subroutines, then go to next.
-//**********************************************************
-static void display_dir_tree (dirs * ktop)
-{
-   dirs *ktemp = ktop;
-   if (ktop == NULL)
-      return;
+//  
+//  vector mode:
+//  Each brother passed to this function, will print his name and info, 
+//  Then iterate over each of his children(brother->brothers),
+//  and let them repeat the story.
+//  
+//  Thus, each folder listing will be followed by all lower folder listings...
+//***********************************************************************************
+static wchar_t formstr[50];
 
+// static void display_dir_tree (dirs *cur_node)
+static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
+{
+   uint num_folders = brothers.size() ;
+   if (brothers.empty()) {
+      return;
+   }
+
+#ifdef  USE_VECTOR
+   // dirs *cur_node = &brothers[0] ;   
+   // uint num_folders = cur_node->brothers.size() ;
+   uint fcount = 0 ;
+   // console->dputsf(L"[%u] %s\n", num_folders, parent_name) ;
+   
+   for(auto &file : brothers) {
+      dirs *ktemp = &file;
+      fcount++ ;
+#else
+   dirs *ktemp = cur_node;
    //  next, build tree lists for subsequent levels (recursive)
    while (ktemp != NULL) {
+#endif   
       //  first, build tree list for current level
       if (level == 0) {
          formstr[0] = (wchar_t) 0;
       }
       else {
-         if (ktemp->brothers == (struct dirs *) NULL) {
+         //  if we are at end of list of brothers, use 'last folder' character
+#ifdef  USE_VECTOR
+         if (fcount == num_folders) {
+#else
+         if (ktemp->brothers == NULL) {
+#endif         
             formstr[level - 1] = (wchar_t) '\\';   //lint !e743 
             formstr[level] = (wchar_t) NULL;
          }
@@ -394,23 +439,37 @@ static void display_dir_tree (dirs * ktop)
 
       //  build tree string for deeper levels
       if (level > 0) {
-         if (ktemp->brothers == NULL)
+#ifdef  USE_VECTOR
+         if (fcount == num_folders) {
+#else
+         if (ktemp->brothers == NULL) {
+#endif         
             formstr[level - 1] = ' ';
-         else
+         }
+         else {
             formstr[level - 1] = '|' ; //lint !e743 
+         }
       }                         //  if level > 1
 
       //  process any sons
       level++;
-      display_dir_tree(ktemp->sons);
+#ifdef  USE_VECTOR
+      // dirs *top = &ktemp->brothers[0] ;   
+      // display_dir_tree(top);
+      display_dir_tree(ktemp->brothers, (TCHAR *) ktemp->name.c_str());
+#else      
+      display_dir_tree(ktemp->son);
+#endif      
       formstr[--level] = (wchar_t) 0;  //  NOLINT
 
+#ifndef  USE_VECTOR
       //  goto next brother
       ktemp = ktemp->brothers;
+#endif      
    }                            //  while not done listing directories
 }
 
-//********************************************************************************
+//**********************************************************//********************************************************************************
 //  this solution is from:
 //  https://github.com/coderforlife/mingw-unicode-main/
 //********************************************************************************
@@ -493,7 +552,8 @@ int wmain(int argc, wchar_t *argv[])
    }
 
    //  show the tree that we read
-   display_dir_tree(top);
+   dirs *temp = &dlist.brothers[0] ;
+   display_dir_tree(dlist.brothers, (TCHAR *) temp->name.c_str());
    return 0;
 }
 

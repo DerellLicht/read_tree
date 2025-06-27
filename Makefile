@@ -60,9 +60,9 @@ endif
 LIBS=-lshlwapi
 
 #  clang-tidy options
-CHFLAGS = -header-filter=.*
+CHFLAGS = -header-filter=.* 
 CHTAIL = --
-CHTAIL += -Ider_libs
+CHTAIL += -Ider_libs -DUSE_VECTOR
 ifeq ($(USE_64BIT),YES)
 CHTAIL += -DUSE_64BIT
 endif
