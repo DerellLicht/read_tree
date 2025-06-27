@@ -469,7 +469,7 @@ int wmain(int argc, wchar_t *argv[])
       console->dputsf(L"build_dir_tree: %s, %s\n", file_spec.c_str(), strerror(-result));
       return 1 ;
    }
-
+   
    //  show the tree that we read
    dirs *temp = &dlist.brothers[0] ;
    display_dir_tree(dlist.brothers, (TCHAR *) temp->name.c_str());
