@@ -42,8 +42,13 @@ LINTFILES=lintdefs.cpp lintdefs.ref.h
 # This is required for *some* versions of makedepend
 IFLAGS += -DNOMAKEDEPEND
 
-CPPSRC=read_tree.cpp \
-der_libs\common_funcs.cpp \
+ifeq ($(USE_VECTOR),YES)
+CPPSRC=read_tree.cpp 
+else
+CPPSRC=read_tree.llist.cpp 
+endif
+
+CPPSRC+=der_libs\common_funcs.cpp \
 der_libs\conio_min.cpp \
 der_libs\qualify.cpp
 
