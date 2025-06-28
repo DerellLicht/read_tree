@@ -381,6 +381,42 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
    }                            //  while not done listing directories
 }
 
+//***********************************************************************************
+//  recursive routine to display directory tree
+//  do all subroutines, then go to next.
+//  
+//  vector mode:
+//  Each brother passed to this function, will print his name and info, 
+//  Then iterate over each of his children(brother->brothers),
+//  and let them repeat the story.
+//  
+//  Thus, each folder listing will be followed by all lower folder listings...
+//***********************************************************************************
+static void traversal_template (std::vector<dirs> brothers, TCHAR *parent_name)
+{
+   if (brothers.empty()) {
+      return;
+   }
+
+   uint num_folders = brothers.size() ;
+   console->dputsf(L"found branch with %u brothers, under %s\n", num_folders, parent_name) ;
+   
+   // uint fcount = 0 ;
+   for(auto &file : brothers) {
+      dirs *ktemp = &file;
+      // fcount++ ;
+
+      //*****************************************************************
+      //                display data for this branch                      
+      //*****************************************************************
+      // console->dputsf(L"%s %s\n", formstr, ktemp->name.c_str()) ;
+
+      level++;
+      traversal_template(ktemp->brothers, (TCHAR *) ktemp->name.c_str());
+      level-- ;
+   }  //  while not done traversing brothers
+}
+
 //**********************************************************//********************************************************************************
 //  this solution is from:
 //  https://github.com/coderforlife/mingw-unicode-main/
@@ -463,8 +499,13 @@ int wmain(int argc, wchar_t *argv[])
       return 1 ;
    }
    
+   dirs *temp ;
    //  show the tree that we read
-   dirs *temp = &dlist.brothers[0] ;
+   temp = &dlist.brothers[0] ;
+   traversal_template(dlist.brothers, (TCHAR *) temp->name.c_str());
+   
+   //  show the tree that we read
+   temp = &dlist.brothers[0] ;
    display_dir_tree(dlist.brothers, (TCHAR *) temp->name.c_str());
    return 0;
 }
