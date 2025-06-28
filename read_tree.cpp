@@ -321,6 +321,7 @@ static int build_dir_tree (wchar_t *tpath)
 //  and let them repeat the story.
 //  
 //  Thus, each folder listing will be followed by all lower folder listings...
+//  AKA, depth-first traversal
 //***********************************************************************************
 static wchar_t formstr[50];
 
@@ -382,8 +383,7 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
 }
 
 //***********************************************************************************
-//  recursive routine to display directory tree
-//  do all subroutines, then go to next.
+//  recursive routine to traverse all branches of folder tree.
 //  
 //  vector mode:
 //  Each brother passed to this function, will print his name and info, 
@@ -391,6 +391,7 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
 //  and let them repeat the story.
 //  
 //  Thus, each folder listing will be followed by all lower folder listings...
+//  AKA, depth-first traversal
 //***********************************************************************************
 static void traversal_template (std::vector<dirs> brothers, TCHAR *parent_name)
 {
