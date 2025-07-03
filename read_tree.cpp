@@ -95,6 +95,26 @@ static void pattern_update(bool do_init)
 }
 
 //**********************************************************
+static std::wstring dirpathx {} ;
+
+static void run_wstring_test(void)
+{
+   uint slen ;
+   dirpathx = L"c:\\home\\*" ;
+   slen = dirpathx.length() ;
+   console->dputsf(L"1: slen: %u, %s\n", slen, dirpathx.c_str()) ;
+   slen = dirpathx.find_last_of(L'\\');
+   slen++ ;
+   dirpathx.resize(slen);
+   // dirpathx[slen] = 0 ; //  this does *not* update length() !!
+   slen = dirpathx.length() ;
+   console->dputsf(L"2: slen: %u, %s\n", slen, dirpathx.c_str()) ;
+   // dirpathx.append(cur_node->name.c_str());
+   // dirpathx.append(L"\\*");
+   
+}
+
+//**********************************************************
 //  recursive routine to read directory tree
 //  in vector mode, cur_node points to a 'son'
 //  Build list of subdirs below this, in brothers[]
@@ -400,21 +420,14 @@ static void traversal_template (std::vector<dirs> brothers, TCHAR *parent_name)
    }
 
    uint num_folders = brothers.size() ;
-   console->dputsf(L"found branch with %u brothers, under %s\n", num_folders, parent_name) ;
+   console->dputsf(L"found branch with %2u brothers, under %s\n", num_folders, parent_name) ;
    
-   // uint fcount = 0 ;
    for(auto &file : brothers) {
       dirs *ktemp = &file;
-      // fcount++ ;
 
-      //*****************************************************************
       //                display data for this branch                      
-      //*****************************************************************
       // console->dputsf(L"%s %s\n", formstr, ktemp->name.c_str()) ;
-
-      level++;
       traversal_template(ktemp->brothers, (TCHAR *) ktemp->name.c_str());
-      level-- ;
    }  //  while not done traversing brothers
 }
 
@@ -508,6 +521,9 @@ int wmain(int argc, wchar_t *argv[])
    //  show the tree that we read
    temp = &dlist.brothers[0] ;
    display_dir_tree(dlist.brothers, (TCHAR *) temp->name.c_str());
+   
+   //  run another test on wstring
+   run_wstring_test();
    return 0;
 }
 
