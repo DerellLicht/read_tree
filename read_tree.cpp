@@ -449,7 +449,7 @@ extern
 #ifdef __cplusplus
 "C" 
 #endif
-void __wgetmainargs(int*,wchar_t***,wchar_t***,int,int*);
+void __wgetmainargs(int*,wchar_t***,wchar_t***,int,int*);   // NOLINT
 
 #ifdef MAIN_USE_ENVP
 int wmain(int argc, wchar_t *argv[], wchar_t *envp[]);
@@ -457,7 +457,7 @@ int wmain(int argc, wchar_t *argv[], wchar_t *envp[]);
 int wmain(int argc, wchar_t *argv[]);
 #endif
 
-int main() 
+int main()  // NOLINT
 {
    wchar_t **enpv, **argv;
    int argc, si = 0;
