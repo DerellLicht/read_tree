@@ -3,5 +3,6 @@ _lint.tmp
 *.zip
 *.bak
 *.o
+*.out
 folder.file.list.txt
 test_dir/
