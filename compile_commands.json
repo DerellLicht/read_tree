@@ -1,0 +1,78 @@
+[
+ {
+  "directory": "D:\\SourceCode\\Git\\read_tree",
+  "arguments": [
+   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "-Wall",
+   "-O3",
+   "-c",
+   "-Weffc++",
+   "-Wno-write-strings",
+   "-DUSE_VECTOR",
+   "-Ider_libs",
+   "-DUNICODE",
+   "-D_UNICODE",
+   "read_tree.cpp",
+   "-o",
+   "read_tree.o"
+  ],
+  "file": "read_tree.cpp"
+ },
+ {
+  "directory": "D:\\SourceCode\\Git\\read_tree",
+  "arguments": [
+   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "-Wall",
+   "-O3",
+   "-c",
+   "-Weffc++",
+   "-Wno-write-strings",
+   "-DUSE_VECTOR",
+   "-Ider_libs",
+   "-DUNICODE",
+   "-D_UNICODE",
+   "der_libs/common_funcs.cpp",
+   "-o",
+   "der_libs/common_funcs.o"
+  ],
+  "file": "der_libs/common_funcs.cpp"
+ },
+ {
+  "directory": "D:\\SourceCode\\Git\\read_tree",
+  "arguments": [
+   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "-Wall",
+   "-O3",
+   "-c",
+   "-Weffc++",
+   "-Wno-write-strings",
+   "-DUSE_VECTOR",
+   "-Ider_libs",
+   "-DUNICODE",
+   "-D_UNICODE",
+   "der_libs/conio_min.cpp",
+   "-o",
+   "der_libs/conio_min.o"
+  ],
+  "file": "der_libs/conio_min.cpp"
+ },
+ {
+  "directory": "D:\\SourceCode\\Git\\read_tree",
+  "arguments": [
+   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "-Wall",
+   "-O3",
+   "-c",
+   "-Weffc++",
+   "-Wno-write-strings",
+   "-DUSE_VECTOR",
+   "-Ider_libs",
+   "-DUNICODE",
+   "-D_UNICODE",
+   "der_libs/qualify.cpp",
+   "-o",
+   "der_libs/qualify.o"
+  ],
+  "file": "der_libs/qualify.cpp"
+ }
+]

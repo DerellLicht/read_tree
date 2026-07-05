@@ -2,6 +2,7 @@ _lint.tmp
 *.exe
 *.zip
 *.bak
+*.out
 *.o
 folder.file.list.txt
 test_dir/

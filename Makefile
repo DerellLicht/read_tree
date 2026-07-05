@@ -2,18 +2,19 @@
 USE_DEBUG = NO
 USE_64BIT = NO
 USE_UNICODE = YES
+USE_VECTOR = YES
 
 ifeq ($(USE_64BIT),YES)
-TOOLS=d:\tdm64\bin
+TOOLS=d:/tdm64/bin
 else
-TOOLS=d:\tdm32\bin
+TOOLS=d:/tdm32/bin
 endif
 
 ifeq ($(USE_DEBUG),YES)
 CFLAGS = -Wall -g -c
 LFLAGS = -g
 else
-CFLAGS = -Wall -s -O3 -c
+CFLAGS = -Wall -O3 -c
 LFLAGS = -s -O3
 endif
 CFLAGS += -Weffc++
@@ -21,6 +22,11 @@ CFLAGS += -Wno-write-strings
 ifeq ($(USE_64BIT),YES)
 CFLAGS += -DUSE_64BIT
 endif
+
+ifeq ($(USE_VECTOR),YES)
+CFLAGS += -DUSE_VECTOR
+endif
+
 CFLAGS += -Ider_libs
 IFLAGS += -Ider_libs
 LiFLAGS += -Ider_libs
@@ -36,10 +42,15 @@ LINTFILES=lintdefs.cpp lintdefs.ref.h
 # This is required for *some* versions of makedepend
 IFLAGS += -DNOMAKEDEPEND
 
-CPPSRC=read_tree.cpp \
-der_libs\common_funcs.cpp \
-der_libs\conio_min.cpp \
-der_libs\qualify.cpp
+ifeq ($(USE_VECTOR),YES)
+CPPSRC=read_tree.cpp 
+else
+CPPSRC=read_tree.llist.cpp 
+endif
+
+CPPSRC+=der_libs/common_funcs.cpp \
+der_libs/conio_min.cpp \
+der_libs/qualify.cpp
 
 OBJS = $(CPPSRC:.cpp=.o)
 
@@ -53,20 +64,9 @@ endif
 
 LIBS=-lshlwapi
 
-#  clang-tidy options
-CHFLAGS = -header-filter=.*
-CHTAIL = --
-CHTAIL += -Ider_libs
-ifeq ($(USE_64BIT),YES)
-CHTAIL += -DUSE_64BIT
-endif
-ifeq ($(USE_UNICODE),YES)
-CHTAIL += -DUNICODE -D_UNICODE
-endif
-
 #**************************************************************************
 %.o: %.cpp
-	$(TOOLS)/g++ $(CFLAGS) -c $< -o $@
+	$(TOOLS)/g++ $(CFLAGS) $< -o $@
 
 all: $(BINX)
 
@@ -81,20 +81,20 @@ wc:
 	wc -l $(CPPSRC)
 
 check:
-	cmd /C "d:\clang\bin\clang-tidy.exe $(CHFLAGS) $(CPPSRC) $(CHTAIL)"
+	cmd /C "d:/clang/bin/clang-tidy.exe $(CPPSRC)"
 
 lint:
-	cmd /C "c:\lint9\lint-nt +v -width(160,4) $(LiFLAGS) -ic:\lint9 mingw.lnt -os(_lint.tmp) $(LINTFILES) $(CPPSRC)"
+	cmd /C "c:/lint9/lint-nt +v -width(160,4) $(LiFLAGS) -ic:/lint9 mingw.lnt -os(_lint.tmp) $(LINTFILES) $(CPPSRC)"
 
 depend: 
 	makedepend $(IFLAGS) $(CPPSRC)
 
 $(BINX): $(OBJS)
-	$(TOOLS)\g++ $(OBJS) $(LFLAGS) -o $(BINX) $(LIBS) 
+	$(TOOLS)/g++ $(OBJS) $(LFLAGS) -o $(BINX) $(LIBS) 
 
 # DO NOT DELETE
 
 read_tree.o: der_libs/common.h der_libs/conio_min.h der_libs/qualify.h
-der_libs\common_funcs.o: der_libs/common.h
-der_libs\conio_min.o: der_libs/common.h der_libs/conio_min.h
-der_libs\qualify.o: der_libs/common.h der_libs/conio_min.h der_libs/qualify.h
+der_libs/common_funcs.o: der_libs/common.h
+der_libs/conio_min.o: der_libs/common.h der_libs/conio_min.h
+der_libs/qualify.o: der_libs/common.h der_libs/qualify.h
