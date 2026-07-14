@@ -73,10 +73,6 @@ all: $(BINX)
 clean:
 	rm -f $(OBJS) *.exe *~ *.zip
 
-dist:
-	rm -f $(BIN).zip
-	zip $(BIN).zip $(BIN) Readme.md
-
 wc:
 	wc -l $(CPPSRC)
 
