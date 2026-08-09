@@ -1,0 +1,11 @@
+# ClaudeLint suppression file
+# One entry per line: path/relative/to/project:line
+# '#' starts a comment (full-line or trailing).
+#
+# Example (uncomment and edit to suppress a real finding):
+# der_libs/common.h:101  # SomeStruct::some_field
+D:\SourceCode\Git\read_tree\read_tree.cpp:29  # unused local 'show_all'
+D:\SourceCode\Git\read_tree\read_tree.cpp:50  # unused field 'dirs::dirsize'
+D:\SourceCode\Git\read_tree\read_tree.cpp:51  # unused field 'dirs::dirsecsize'
+D:\SourceCode\Git\read_tree\read_tree.cpp:54  # unused field 'dirs::files'
+

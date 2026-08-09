@@ -1,11 +1,7 @@
-//**********************************************************************************
-//  read_files.cpp 
-//  This will be a generic utility to identify all files specified 
-//  by a provided file spec with wildcards
-//  This is intended as a template for reading all files in current directory,
-//  then performing some task on them.  The print statement at the end
-//  can be replaced with a function call to perform the desired operation
-//  on each discovered file.
+//*********************************************************************************
+//  read_tree.cpp 
+//  This will be a generic utility to recurse through the directory tree
+//  at and below the specified target directory.
 //  
 //  Written by:  Derell Licht
 //**********************************************************************************
@@ -20,24 +16,11 @@
 // #define  DESPERATE
 
 #include "common.h"
-#ifndef _lint
 #include "conio_min.h"
-#endif
 #include "qualify.h"
-
-//lint -esym(534, FindClose)  // Ignoring return value of function
-//lint -e818  variable could be declared as pointing to const
-//lint -e10   Expecting '}'
-
-//lint -esym(843, display_dir_tree, formstr)
-//lint -esym(528, display_tree_filename, formstr)
-//lint -esym(551, top)  Symbol not accessed
-//lint -esym(844, top)
 
 //  per Jason Hood, this turns off MinGW's command-line expansion, 
 //  so we can handle wildcards like we want to.                    
-//lint -e765  external '_CRT_glob' could be made static
-//lint -e714  Symbol '_CRT_glob' not referenced
 int _CRT_glob = 0 ;
 
 wchar_t tempstr[MAX_PATH+1];
@@ -61,7 +44,7 @@ unsigned level;
 //**********************************************************
 struct dirs
 {
-   std::vector<dirs> brothers {};
+   std::vector<dirs> subdirs {};
    std::wstring name {};
    uchar attrib{};
    ULONGLONG dirsize{};
@@ -74,7 +57,7 @@ struct dirs
    unsigned subdirects{};
 };
 
-static dirs dlist {};   //  top-level brothers will be unused
+static dirs dlist {};   
 
 //*********************************************************
 //  "waiting" pattern generator
@@ -117,7 +100,7 @@ static void run_wstring_test(void)
 //**********************************************************
 //  recursive routine to read directory tree
 //  in vector mode, cur_node points to a 'son'
-//  Build list of subdirs below this, in brothers[]
+//  Build list of subdirs below this, in subdirs[]
 //**********************************************************
 static int read_dir_tree (dirs *cur_node)
 {
@@ -157,7 +140,14 @@ static int read_dir_tree (dirs *cur_node)
 #endif   
 
    DWORD err = 0;
-   handle = FindFirstFile(dirpath, &fdata);
+   // handle = FindFirstFile(dirpath, &fdata);
+   handle = FindFirstFileExW(dirpath, 
+      FindExInfoBasic,       // skip short-name population
+      &fdata,
+      FindExSearchNameMatch,
+      nullptr,
+      0);  // add FIND_FIRST_EX_LARGE_FETCH if you want, optional perf flag
+      
    if (handle == INVALID_HANDLE_VALUE) {
       err = GetLastError ();
       if (err == ERROR_ACCESS_DENIED) {
@@ -199,10 +189,10 @@ static int read_dir_tree (dirs *cur_node)
                   console->dputsf(L"cur_node is NULL\n");
                   return -1 ;
                }
-               cur_node->brothers.emplace_back();
-               // cur_node->son[0].brothers.emplace_back();
-               uint idx = cur_node->brothers.size() - 1 ;
-               dirs *dtemp = &cur_node->brothers[idx] ;
+               cur_node->subdirs.emplace_back();
+               // cur_node->son[0].subdirs.emplace_back();
+               uint idx = cur_node->subdirs.size() - 1 ;
+               dirs *dtemp = &cur_node->subdirs[idx] ;
                
                //  convert Unicode filenames to UTF8
                dtemp->name = fdata.cFileName ;
@@ -270,13 +260,13 @@ console->dputsf(L"%s: other error [%u]\n", fdata.cFileName, err);
    }  //  while reading files from directory
 
 #ifdef  DESPERATE
-console->dputsf(L"close: %s: brothers size: %u\n", dirpath, cur_node->brothers.size());
+console->dputsf(L"close: %s: subdirs size: %u\n", dirpath, cur_node->subdirs.size());
 #endif
    FindClose (handle);
 
    //  next, build tree lists for subsequent levels (rescursive)
    // dirs *temp = &cur_node->son[0] ;
-   for(auto &file : cur_node->brothers) {
+   for(auto &file : cur_node->subdirs) {
       dirs *ktemp = &file;
       // dirs *ktemp = &knode->son[0] ;
       read_dir_tree (ktemp);
@@ -302,8 +292,8 @@ static int build_dir_tree (wchar_t *tpath)
 
    //  allocate struct for dir listing
    // top = new_dir_node ();
-   dlist.brothers.emplace_back();
-   dirs *temp = &dlist.brothers[0] ;
+   dlist.subdirs.emplace_back();
+   dirs *temp = &dlist.subdirs[0] ;
 
    //  derive root path name
    if (wcslen (base_path) == 3) {
@@ -337,7 +327,7 @@ static int build_dir_tree (wchar_t *tpath)
 //  
 //  vector mode:
 //  Each brother passed to this function, will print his name and info, 
-//  Then iterate over each of his children(brother->brothers),
+//  Then iterate over each of his children(brother->subdirs),
 //  and let them repeat the story.
 //  
 //  Thus, each folder listing will be followed by all lower folder listings...
@@ -345,19 +335,19 @@ static int build_dir_tree (wchar_t *tpath)
 //***********************************************************************************
 static wchar_t formstr[50];
 
-static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
+static void display_dir_tree (std::vector<dirs> subdirs, TCHAR *parent_name)
 {
-   if (brothers.empty()) {
+   if (subdirs.empty()) {
       return;
    }
 
-   // dirs *cur_node = &brothers[0] ;   
-   // uint num_folders = cur_node->brothers.size() ;
-   uint num_folders = brothers.size() ;
+   // dirs *cur_node = &subdirs[0] ;   
+   // uint num_folders = cur_node->subdirs.size() ;
+   uint num_folders = subdirs.size() ;
    uint fcount = 0 ;
    // console->dputsf(L"[%u] %s\n", num_folders, parent_name) ;
    
-   for(auto &file : brothers) {
+   for(auto &file : subdirs) {
       dirs *ktemp = &file;
       fcount++ ;
       //  first, build tree list for current level
@@ -365,7 +355,7 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
          formstr[0] = (wchar_t) 0;
       }
       else {
-         //  if we are at end of list of brothers, use 'last folder' character
+         //  if we are at end of list of subdirs, use 'last folder' character
          if (fcount == num_folders) {
             formstr[level - 1] = (wchar_t) '\\';   //lint !e743 
             formstr[level] = (wchar_t) NULL;
@@ -394,9 +384,9 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
 
       //  process any sons
       level++;
-      // dirs *top = &ktemp->brothers[0] ;   
+      // dirs *top = &ktemp->subdirs[0] ;   
       // display_dir_tree(top);
-      display_dir_tree(ktemp->brothers, (TCHAR *) ktemp->name.c_str());
+      display_dir_tree(ktemp->subdirs, (TCHAR *) ktemp->name.c_str());
       formstr[--level] = (wchar_t) 0;  //  NOLINT
 
    }                            //  while not done listing directories
@@ -407,28 +397,28 @@ static void display_dir_tree (std::vector<dirs> brothers, TCHAR *parent_name)
 //  
 //  vector mode:
 //  Each brother passed to this function, will print his name and info, 
-//  Then iterate over each of his children(brother->brothers),
+//  Then iterate over each of his children(brother->subdirs),
 //  and let them repeat the story.
 //  
 //  Thus, each folder listing will be followed by all lower folder listings...
 //  AKA, depth-first traversal
 //***********************************************************************************
-static void traversal_template (std::vector<dirs> brothers, TCHAR *parent_name)
+static void traversal_template (std::vector<dirs> subdirs, TCHAR *parent_name)
 {
-   if (brothers.empty()) {
+   if (subdirs.empty()) {
       return;
    }
 
-   uint num_folders = brothers.size() ;
-   console->dputsf(L"found branch with %2u brothers, under %s\n", num_folders, parent_name) ;
+   uint num_folders = subdirs.size() ;
+   console->dputsf(L"found branch with %2u subdirs, under %s\n", num_folders, parent_name) ;
    
-   for(auto &file : brothers) {
+   for(auto &file : subdirs) {
       dirs *ktemp = &file;
 
       //                display data for this branch                      
       // console->dputsf(L"%s %s\n", formstr, ktemp->name.c_str()) ;
-      traversal_template(ktemp->brothers, (TCHAR *) ktemp->name.c_str());
-   }  //  while not done traversing brothers
+      traversal_template(ktemp->subdirs, (TCHAR *) ktemp->name.c_str());
+   }  //  while not done traversing subdirs
 }
 
 //**********************************************************//********************************************************************************
@@ -515,12 +505,12 @@ int wmain(int argc, wchar_t *argv[])
    
    dirs *temp ;
    //  show the tree that we read
-   temp = &dlist.brothers[0] ;
-   traversal_template(dlist.brothers, (TCHAR *) temp->name.c_str());
+   temp = &dlist.subdirs[0] ;
+   traversal_template(dlist.subdirs, (TCHAR *) temp->name.c_str());
    
    //  show the tree that we read
-   temp = &dlist.brothers[0] ;
-   display_dir_tree(dlist.brothers, (TCHAR *) temp->name.c_str());
+   temp = &dlist.subdirs[0] ;
+   display_dir_tree(dlist.subdirs, (TCHAR *) temp->name.c_str());
    
    //  run another test on wstring
    run_wstring_test();
