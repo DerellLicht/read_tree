@@ -2,34 +2,8 @@ USE_DEBUG = NO
 USE_64BIT = YES
 USE_UNICODE = YES
 USE_CLANG = YES
-# use -static for clang and cygwin/mingw
-#  clang vs tdm
-#  clang gives *much* clearer compiler error messages...
-#  However, programs built with clang++ will require libc++.dll and libunwind.dll
-#  in order to be used elsewhere 
-#  (unless built with -static, which significantly boosts file size)
 
-ifeq ($(USE_64BIT),YES)
-#  _stprintf(), aka wsprintf(), are not working properly at all,
-#  in TDM64 V10.3.0 with UNICODE enabled
-ifeq ($(USE_CLANG),YES)
-#TOOLS=d:\llvm\bin
-TOOLS=d:/llvm/bin
-GNAME=x86_64-w64-mingw32-clang++
-USE_STATIC = YES
-else
-#  with d:\tdm64\bin, NDIR logo does not display correctly,
-#  probably due to wsprintf() issue noted above
-TOOLS=C:/cygwin64/bin
-#GNAME=g++
-GNAME=x86_64-w64-mingw32-g++
-USE_STATIC = YES
-endif
-else
-TOOLS=d:\tdm32\bin
-GNAME=g++
-USE_STATIC = NO
-endif
+include ..\tool_select.mak 
 
 ifeq ($(USE_DEBUG),YES)
 CFLAGS = -Wall -g -c
