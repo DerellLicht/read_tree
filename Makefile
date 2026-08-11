@@ -3,7 +3,7 @@ USE_64BIT = YES
 USE_UNICODE = YES
 USE_CLANG = YES
 
-include ..\tool_select.mak 
+include der_libs\tool_select.mak
 
 ifeq ($(USE_DEBUG),YES)
 CFLAGS = -Wall -g -c
