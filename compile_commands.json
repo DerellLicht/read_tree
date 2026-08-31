@@ -2,13 +2,12 @@
  {
   "directory": "D:\\SourceCode\\Git\\read_tree",
   "arguments": [
-   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "d:/llvm/binx86_64-w64-mingw32-clang++",
    "-Wall",
    "-O3",
    "-c",
    "-Weffc++",
    "-Wno-write-strings",
-   "-DUSE_64BIT",
    "-Ider_libs",
    "-DUNICODE",
    "-D_UNICODE",
@@ -21,13 +20,12 @@
  {
   "directory": "D:\\SourceCode\\Git\\read_tree",
   "arguments": [
-   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "d:/llvm/binx86_64-w64-mingw32-clang++",
    "-Wall",
    "-O3",
    "-c",
    "-Weffc++",
    "-Wno-write-strings",
-   "-DUSE_64BIT",
    "-Ider_libs",
    "-DUNICODE",
    "-D_UNICODE",
@@ -40,13 +38,12 @@
  {
   "directory": "D:\\SourceCode\\Git\\read_tree",
   "arguments": [
-   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "d:/llvm/binx86_64-w64-mingw32-clang++",
    "-Wall",
    "-O3",
    "-c",
    "-Weffc++",
    "-Wno-write-strings",
-   "-DUSE_64BIT",
    "-Ider_libs",
    "-DUNICODE",
    "-D_UNICODE",
@@ -59,13 +56,12 @@
  {
   "directory": "D:\\SourceCode\\Git\\read_tree",
   "arguments": [
-   "D:/llvm/bin/i686-w64-mingw32-clang++.exe",
+   "d:/llvm/binx86_64-w64-mingw32-clang++",
    "-Wall",
    "-O3",
    "-c",
    "-Weffc++",
    "-Wno-write-strings",
-   "-DUSE_64BIT",
    "-Ider_libs",
    "-DUNICODE",
    "-D_UNICODE",
